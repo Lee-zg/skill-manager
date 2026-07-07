@@ -1,21 +1,37 @@
-use tauri::{Manager, menu::{Menu, MenuItem}, tray::{TrayIconBuilder, TrayIconEvent}};
+mod adapters;
+mod commands;
+mod db;
+mod utils;
 
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+use commands::skills::{
+    detect_tools, list_skills, scan_skills, search_skills, toggle_skill, uninstall_skill,
+    DbState,
+};
+use std::sync::Mutex;
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::TrayIconBuilder,
+    Manager,
+};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_sql::Builder::default().build())
-        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {
-            // System tray setup
-            let toggle = MenuItem::with_id(app, "toggle", "Show/Hide", true, None::<&str>)?;
-            let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            // Init DB
+            let conn = db::open().expect("Failed to open database");
+            app.manage(DbState(Mutex::new(conn)));
+
+            // System tray
+            let toggle = MenuItem::with_id(app, "toggle", "显示/隐藏", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&toggle, &quit])?;
 
             let _tray = TrayIconBuilder::with_id("main")
@@ -24,24 +40,29 @@ pub fn run() {
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "toggle" => {
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = if window.is_visible().unwrap_or(false) {
-                                window.hide()
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = if win.is_visible().unwrap_or(false) {
+                                win.hide()
                             } else {
-                                window.show().and_then(|_| window.set_focus())
+                                win.show().and_then(|_| win.set_focus())
                             };
                         }
                     }
-                    "quit" => {
-                        app.exit(0);
-                    }
+                    "quit" => app.exit(0),
                     _ => {}
                 })
                 .build(app)?;
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![
+            scan_skills,
+            list_skills,
+            search_skills,
+            toggle_skill,
+            uninstall_skill,
+            detect_tools,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
