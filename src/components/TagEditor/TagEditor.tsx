@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { X, Plus } from 'lucide-react'
+import { XIcon, PlusIcon } from '@/components/icons'
 import { invoke } from '@tauri-apps/api/core'
 
 interface Props {
@@ -45,22 +45,19 @@ export default function TagEditor({ skillId, tags, onChanged }: Props) {
       {tags.map((tag) => (
         <span
           key={tag}
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium"
           style={{
-            fontSize: 11, padding: '2px 6px 2px 8px',
             background: 'var(--color-accent-muted)',
-            border: '1px solid rgba(99,102,241,0.3)',
-            borderRadius: 'var(--radius-full)',
+            borderColor: 'rgba(99,102,241,0.3)',
             color: 'var(--color-accent-hover)',
           }}
         >
           #{tag}
           <button
             onClick={() => removeTag(tag)}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-              color: 'var(--color-accent)', opacity: 0.6, display: 'flex', alignItems: 'center' }}
+            className="flex items-center opacity-60 hover:opacity-100 transition-opacity bg-none border-none p-0 cursor-pointer text-[var(--color-accent)]"
           >
-            <X size={9} />
+            <XIcon size={9} />
           </button>
         </span>
       ))}
@@ -78,24 +75,14 @@ export default function TagEditor({ skillId, tags, onChanged }: Props) {
             setInputVal('')
           }}
           placeholder="添加标签..."
-          style={{
-            background: 'none', border: 'none', outline: 'none',
-            fontSize: 11, color: 'var(--color-text-primary)',
-            width: 80, padding: '2px 0',
-          }}
+          className="bg-transparent border-none outline-none text-[11px] text-[var(--color-text-primary)] w-20 py-0.5"
         />
       ) : (
         <button
           onClick={() => setInputVisible(true)}
-          className="flex items-center gap-1"
-          style={{
-            background: 'none', border: '1px dashed var(--color-border)',
-            borderRadius: 'var(--radius-full)', cursor: 'pointer',
-            padding: '2px 7px', fontSize: 10,
-            color: 'var(--color-text-placeholder)',
-          }}
+          className="flex items-center gap-1 rounded-full border border-dashed border-[var(--color-border)] px-1.5 py-0.5 text-[10px] text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)] transition-colors cursor-pointer bg-none"
         >
-          <Plus size={9} /> 标签
+          <PlusIcon size={9} /> 标签
         </button>
       )}
     </div>

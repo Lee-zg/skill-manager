@@ -46,6 +46,8 @@ pub fn run() {
             None,
         ))
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_updater::Builder::default().build())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             // Init DB
             let conn = db::open().expect("Failed to open database");

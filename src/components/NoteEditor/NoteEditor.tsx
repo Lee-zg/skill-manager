@@ -1,6 +1,7 @@
+import { PencilIcon, CheckIcon } from '@/components/icons'
 import { useState, useRef } from 'react'
-import { Pencil, Check } from 'lucide-react'
 import { invoke } from '@tauri-apps/api/core'
+import { Button } from '@/components/ui/button'
 
 interface Props {
   skillId: string
@@ -23,28 +24,27 @@ export default function NoteEditor({ skillId, note, onChanged }: Props) {
     return (
       <div
         onClick={() => { setEditing(true); setTimeout(() => ref.current?.focus(), 50) }}
-        className="flex flex-col gap-1 rounded cursor-pointer group"
+        className="group flex flex-col gap-1 rounded-md cursor-pointer transition-colors duration-150 p-2.5 min-h-[60px]"
         style={{
           background: 'var(--color-bg-surface)',
           border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-md)',
-          padding: '8px 10px', minHeight: 60,
-          transition: 'border-color var(--duration-fast)',
         }}
         onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--color-accent)')}
         onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
       >
         <div className="flex items-center justify-between">
-          <span style={{ fontSize: 10, color: 'var(--color-text-placeholder)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span className="text-[10px] uppercase tracking-[0.06em] text-[var(--color-text-placeholder)]">
             备注
           </span>
-          <Pencil size={10} style={{ color: 'var(--color-text-placeholder)', opacity: 0 }}
-            className="group-hover:opacity-100 transition-opacity" />
+          <PencilIcon
+            size={10}
+            className="text-[var(--color-text-placeholder)] opacity-0 group-hover:opacity-100 transition-opacity"
+          />
         </div>
-        <p style={{
-          fontSize: 12, color: value ? 'var(--color-text-secondary)' : 'var(--color-text-placeholder)',
-          lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap',
-        }}>
+        <p
+          className="text-[12px] leading-relaxed m-0 whitespace-pre-wrap"
+          style={{ color: value ? 'var(--color-text-secondary)' : 'var(--color-text-placeholder)' }}
+        >
           {value || '点击添加备注...'}
         </p>
       </div>
@@ -52,7 +52,7 @@ export default function NoteEditor({ skillId, note, onChanged }: Props) {
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="relative">
       <textarea
         ref={ref}
         value={value}
@@ -63,27 +63,22 @@ export default function NoteEditor({ skillId, note, onChanged }: Props) {
         }}
         rows={4}
         placeholder="添加备注... (⌘+Enter 保存, Esc 取消)"
+        className="w-full resize-y rounded-md text-[12px] leading-relaxed p-2.5 outline-none"
         style={{
-          width: '100%', resize: 'vertical',
           background: 'var(--color-bg-surface)',
           border: '1px solid var(--color-accent)',
-          borderRadius: 'var(--radius-md)',
           color: 'var(--color-text-primary)',
-          fontSize: 12, lineHeight: 1.6,
-          padding: '8px 10px', outline: 'none',
+          fontFamily: 'inherit',
         }}
       />
-      <button
+      <Button
         onClick={save}
-        style={{
-          position: 'absolute', bottom: 8, right: 8,
-          background: 'var(--color-accent)', border: 'none', borderRadius: 'var(--radius-sm)',
-          color: '#fff', cursor: 'pointer', padding: '3px 8px',
-          fontSize: 11, display: 'flex', alignItems: 'center', gap: 4,
-        }}
+        size="sm"
+        className="absolute bottom-2 right-2 gap-1"
       >
-        <Check size={11} /> 保存
-      </button>
+        <CheckIcon size={11} />
+        保存
+      </Button>
     </div>
   )
 }

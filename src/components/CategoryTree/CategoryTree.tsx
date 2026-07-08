@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Plus, ChevronRight, Folder, Layers, Trash2 } from 'lucide-react'
+import {
+  PlusIcon, ChevronRightIcon, FolderIcon, LayersIcon, Trash2Icon,
+} from '@/components/icons'
 import { useCategoryStore, type Category } from '@/stores/categoryStore'
 import { useSkillStore } from '@/stores/skillStore'
+import { cn } from '@/lib/utils'
 
 export default function CategoryTree() {
   const { categories, activeCategory, setActiveCategory, fetchCategories, createCategory, deleteCategory } =
@@ -28,16 +31,14 @@ export default function CategoryTree() {
 
   return (
     <div className="py-1">
-      {/* All skills */}
       <NavItem
-        icon={<Layers size={13} />}
+        icon={<LayersIcon size={13} />}
         label="全部"
         count={categories.find((c) => c.id === 'all')?.skillCount ?? 0}
         active={activeCategory === null}
         onClick={() => handleSelect(null)}
       />
 
-      {/* User categories */}
       {rootCategories
         .filter((c) => c.id !== 'all' && c.id !== 'uncategorized')
         .map((cat) => (
@@ -53,12 +54,11 @@ export default function CategoryTree() {
           />
         ))}
 
-      {/* Uncategorized */}
       {(() => {
         const unc = categories.find((c) => c.id === 'uncategorized')
         return unc ? (
           <NavItem
-            icon={<Folder size={13} />}
+            icon={<FolderIcon size={13} />}
             label="未分类"
             count={unc.skillCount}
             active={activeCategory === 'uncategorized'}
@@ -81,22 +81,14 @@ export default function CategoryTree() {
             }}
             onBlur={() => { if (!newName.trim()) setCreating(false) }}
             placeholder="分类名称..."
-            style={{
-              width: '100%', background: 'var(--color-bg-surface)',
-              border: '1px solid var(--color-accent)', borderRadius: 'var(--radius-sm)',
-              color: 'var(--color-text-primary)', fontSize: 12, padding: '3px 7px', outline: 'none',
-            }}
+            className="w-full rounded bg-[var(--color-bg-surface)] border border-[var(--color-accent)] text-[var(--color-text-primary)] text-[12px] px-1.5 py-1 outline-none"
           />
         ) : (
           <button
             onClick={() => setCreating(true)}
-            className="flex items-center gap-1.5 w-full px-1 py-1.5"
-            style={{ background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--color-text-placeholder)', fontSize: 11 }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-text-secondary)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-placeholder)')}
+            className="flex items-center gap-1.5 w-full px-1 py-1.5 bg-none border-none cursor-pointer text-[var(--color-text-placeholder)] text-[11px] hover:text-[var(--color-text-secondary)] transition-colors"
           >
-            <Plus size={11} /> 添加分类
+            <PlusIcon size={11} /> 添加分类
           </button>
         )}
       </div>
@@ -115,21 +107,19 @@ function NavItem({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 w-full px-3 py-1.5 rounded-sm transition-colors"
-      style={{
-        background: active ? 'var(--color-accent-muted)' : 'transparent',
-        border: 'none', cursor: 'pointer', textAlign: 'left',
-        color: active ? 'var(--color-accent-hover)' : muted ? 'var(--color-text-placeholder)' : 'var(--color-text-secondary)',
-        fontSize: 12, fontWeight: active ? 500 : 400,
-      }}
-      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'var(--color-bg-surface)' }}
-      onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent' }}
+      className={cn(
+        'flex items-center gap-2 w-full px-3 py-1.5 rounded-sm border-none cursor-pointer text-left text-[12px] transition-colors',
+        active
+          ? 'bg-[var(--color-accent-muted)] text-[var(--color-accent-hover)] font-medium'
+          : muted
+          ? 'text-[var(--color-text-placeholder)] hover:bg-[var(--color-bg-surface)] bg-transparent'
+          : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-surface)] bg-transparent',
+      )}
     >
-      <span style={{ color: 'inherit', flexShrink: 0 }}>{icon}</span>
+      <span className="text-inherit shrink-0">{icon}</span>
       <span className="flex-1 truncate">{label}</span>
       {count !== undefined && count > 0 && (
-        <span style={{ fontSize: 10, color: 'var(--color-text-placeholder)',
-          background: 'var(--color-bg-hover)', padding: '0 5px', borderRadius: 'var(--radius-full)' }}>
+        <span className="text-[10px] text-[var(--color-text-placeholder)] bg-[var(--color-bg-hover)] px-1 rounded-full">
           {count}
         </span>
       )}
@@ -149,52 +139,64 @@ function CategoryRow({
   return (
     <div>
       <div
-        className="group flex items-center gap-1 px-2 rounded-sm"
-        style={{ background: active ? 'var(--color-accent-muted)' : 'transparent' }}
+        className={cn(
+          'flex items-center gap-1 px-2 rounded-sm',
+          active ? 'bg-[var(--color-accent-muted)]' : 'bg-transparent',
+        )}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
         {subCategories.length > 0 ? (
-          <button onClick={() => setExpanded(!expanded)}
-            style={{ background: 'none', border: 'none', padding: '2px', cursor: 'pointer',
-              color: 'var(--color-text-placeholder)', transform: expanded ? 'rotate(90deg)' : 'none',
-              transition: 'transform 150ms' }}>
-            <ChevronRight size={10} />
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="bg-none border-none p-0.5 cursor-pointer text-[var(--color-text-placeholder)] transition-transform duration-150"
+            style={{ transform: expanded ? 'rotate(90deg)' : 'none' }}
+          >
+            <ChevronRightIcon size={10} />
           </button>
-        ) : <div style={{ width: 14 }} />}
+        ) : (
+          <div style={{ width: 14 }} />
+        )}
 
-        <button onClick={onSelect} className="flex items-center gap-1.5 flex-1 py-1.5"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+        <button
+          onClick={onSelect}
+          className="flex items-center gap-1.5 flex-1 py-1.5 bg-none border-none cursor-pointer text-left text-[12px]"
+          style={{
             color: active ? 'var(--color-accent-hover)' : 'var(--color-text-secondary)',
-            fontSize: 12, fontWeight: active ? 500 : 400 }}>
+            fontWeight: active ? 500 : 400,
+          }}
+        >
           <span style={{ color: cat.color, fontSize: 13 }}>{cat.icon}</span>
           <span className="flex-1 truncate">{cat.name}</span>
-          <span style={{ fontSize: 10, color: 'var(--color-text-placeholder)' }}>{cat.skillCount}</span>
+          <span className="text-[10px] text-[var(--color-text-placeholder)]">{cat.skillCount}</span>
         </button>
 
         {hovered && !cat.isSystem && (
-          <button onClick={onDelete}
-            style={{ background: 'none', border: 'none', padding: '2px 4px', cursor: 'pointer',
-              color: 'var(--color-danger)', opacity: 0.7 }}>
-            <Trash2 size={10} />
+          <button
+            onClick={onDelete}
+            className="bg-none border-none px-1 py-0.5 cursor-pointer text-[var(--color-danger)] opacity-70 hover:opacity-100"
+          >
+            <Trash2Icon size={10} />
           </button>
         )}
       </div>
 
-      {expanded && subCategories.map((sub) => (
-        <button key={sub.id}
-          onClick={() => onSelectSub(sub.id)}
-          className="flex items-center gap-1.5 w-full pl-8 pr-3 py-1.5"
-          style={{
-            background: activeSubId === sub.id ? 'var(--color-accent-muted)' : 'transparent',
-            border: 'none', cursor: 'pointer',
-            color: activeSubId === sub.id ? 'var(--color-accent-hover)' : 'var(--color-text-secondary)',
-            fontSize: 11,
-          }}>
-          <span style={{ color: sub.color }}>{sub.icon}</span>
-          <span className="flex-1 truncate">{sub.name}</span>
-        </button>
-      ))}
+      {expanded &&
+        subCategories.map((sub) => (
+          <button
+            key={sub.id}
+            onClick={() => onSelectSub(sub.id)}
+            className={cn(
+              'flex items-center gap-1.5 w-full pl-8 pr-3 py-1.5 border-none cursor-pointer text-[11px]',
+              activeSubId === sub.id
+                ? 'bg-[var(--color-accent-muted)] text-[var(--color-accent-hover)]'
+                : 'bg-transparent text-[var(--color-text-secondary)]',
+            )}
+          >
+            <span style={{ color: sub.color }}>{sub.icon}</span>
+            <span className="flex-1 truncate">{sub.name}</span>
+          </button>
+        ))}
     </div>
   )
 }

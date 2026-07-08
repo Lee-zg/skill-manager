@@ -73,8 +73,15 @@
       "preloadConnections": ["sqlite:skillhub.db"]
     },
     "updater": {
-      "pubkey": "",
-      "endpoints": []
+      "pubkey": "REPLACE_WITH_YOUR_PUBLIC_KEY_FROM_tauri_signer_generate",
+      "endpoints": [
+        "https://github.com/YOUR_USERNAME/skill-manager/releases/latest/download/latest.json"
+      ],
+      "dialog": false,
+      "windows": {
+        "installerArgs": [],
+        "installMode": "passive"
+      }
     }
   }
 }

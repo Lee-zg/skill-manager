@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Search, Layers, LayoutGrid, Compass, RefreshCw } from 'lucide-react'
+import { SearchIcon, LayersIcon, LayoutGridIcon, CompassIcon, RefreshCwIcon } from '@/components/icons'
 import { useNavigate } from 'react-router-dom'
 import { useSkillStore } from '@/stores/skillStore'
+import { cn } from '@/lib/utils'
 
 interface Command {
   id: string
@@ -34,25 +35,24 @@ export default function CommandPalette({ open, onClose }: Props) {
 
   const staticCommands: Command[] = [
     {
-      id: 'nav-skills', label: '打开技能库', icon: <Layers size={14} />,
+      id: 'nav-skills', label: '打开技能库', icon: <LayersIcon size={14} />,
       action: () => { navigate('/skills'); onClose() }, group: '导航',
     },
     {
-      id: 'nav-workspaces', label: '打开工作区', icon: <LayoutGrid size={14} />,
+      id: 'nav-workspaces', label: '打开工作区', icon: <LayoutGridIcon size={14} />,
       action: () => { navigate('/workspaces'); onClose() }, group: '导航',
     },
     {
-      id: 'nav-discover', label: '发现新技能', icon: <Compass size={14} />,
+      id: 'nav-discover', label: '发现新技能', icon: <CompassIcon size={14} />,
       action: () => { navigate('/discover'); onClose() }, group: '导航',
     },
     {
       id: 'scan', label: '扫描本地技能', description: '重新扫描并更新已安装技能',
-      icon: <RefreshCw size={14} />,
+      icon: <RefreshCwIcon size={14} />,
       action: async () => { onClose(); await scanSkills() }, group: '操作',
     },
   ]
 
-  // Dynamic skill commands from search
   const skillCommands: Command[] = query.length >= 2
     ? skills
         .filter((s) =>
@@ -64,7 +64,12 @@ export default function CommandPalette({ open, onClose }: Props) {
           id: `skill-${s.id}`,
           label: s.name,
           description: s.toolId,
-          icon: <span style={{ fontSize: 13 }}>{s.enabled ? '●' : '○'}</span>,
+          icon: (
+            <span
+              className="w-2 h-2 rounded-full inline-block"
+              style={{ background: s.enabled ? 'var(--color-success)' : 'var(--color-text-placeholder)' }}
+            />
+          ),
           action: () => {
             navigate('/skills')
             setSearchQuery(s.name)
@@ -96,7 +101,7 @@ export default function CommandPalette({ open, onClose }: Props) {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); setSelected((s) => Math.min(s + 1, flat.length - 1)) }
-    if (e.key === 'ArrowUp') { e.preventDefault(); setSelected((s) => Math.max(s - 1, 0)) }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setSelected((s) => Math.max(s - 1, 0)) }
     if (e.key === 'Enter' && flat[selected]) flat[selected].action()
     if (e.key === 'Escape') onClose()
   }
@@ -110,63 +115,63 @@ export default function CommandPalette({ open, onClose }: Props) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="glass-panel flex flex-col overflow-hidden"
-        style={{ width: 600, maxHeight: 460, borderRadius: 'var(--radius-lg)' }}
+        className="glass-panel flex flex-col overflow-hidden rounded-[var(--radius-lg)]"
+        style={{ width: 600, maxHeight: 460 }}
         onKeyDown={handleKeyDown}
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3"
-          style={{ borderBottom: '1px solid var(--color-border)' }}>
-          <Search size={15} style={{ color: 'var(--color-text-placeholder)', flexShrink: 0 }} />
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)]">
+          <SearchIcon size={15} className="text-[var(--color-text-placeholder)] shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="搜索技能、导航、操作..."
-            style={{
-              flex: 1, background: 'none', border: 'none', outline: 'none',
-              fontSize: 14, color: 'var(--color-text-primary)',
-            }}
+            className="flex-1 bg-transparent border-none outline-none text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-placeholder)]"
           />
-          <kbd style={{ fontSize: 10, color: 'var(--color-text-placeholder)',
-            background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)',
-            borderRadius: 4, padding: '1px 5px' }}>ESC</kbd>
+          <kbd className="text-[10px] text-[var(--color-text-placeholder)] bg-[var(--color-bg-surface)] border border-[var(--color-border)] rounded px-1.5 py-0.5">
+            ESC
+          </kbd>
         </div>
 
         {/* Results */}
         <div className="overflow-y-auto flex-1 py-1">
           {flat.length === 0 ? (
-            <p style={{ textAlign: 'center', color: 'var(--color-text-placeholder)',
-              fontSize: 13, padding: '24px 0' }}>无匹配结果</p>
+            <p className="text-center text-[var(--color-text-placeholder)] text-[13px] py-6">
+              无匹配结果
+            </p>
           ) : (
             Object.entries(grouped).map(([group, cmds]) => {
               const groupStartIdx = flat.indexOf(cmds[0])
               return (
                 <div key={group}>
-                  <p style={{ fontSize: 10, color: 'var(--color-text-placeholder)', padding: '8px 14px 2px',
-                    textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-placeholder)] px-3.5 pt-2 pb-0.5">
                     {group}
                   </p>
                   {cmds.map((cmd, i) => {
                     const idx = groupStartIdx + i
+                    const active = idx === selected
                     return (
                       <button
                         key={cmd.id}
                         onClick={cmd.action}
-                        className="flex items-center gap-3 w-full px-4 py-2.5 transition-colors"
-                        style={{
-                          background: idx === selected ? 'var(--color-accent-muted)' : 'transparent',
-                          border: 'none', cursor: 'pointer', textAlign: 'left',
-                          color: idx === selected ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                        }}
                         onMouseEnter={() => setSelected(idx)}
+                        className={cn(
+                          'flex items-center gap-3 w-full px-4 py-2.5 border-none cursor-pointer text-left transition-colors',
+                          active
+                            ? 'bg-[var(--color-accent-muted)] text-[var(--color-text-primary)]'
+                            : 'bg-transparent text-[var(--color-text-secondary)]',
+                        )}
                       >
-                        <span style={{ color: idx === selected ? 'var(--color-accent)' : 'var(--color-text-placeholder)', flexShrink: 0 }}>
+                        <span className={cn(
+                          'shrink-0 flex items-center',
+                          active ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-placeholder)]',
+                        )}>
                           {cmd.icon}
                         </span>
-                        <span style={{ flex: 1, fontSize: 13 }}>{cmd.label}</span>
+                        <span className="flex-1 text-[13px]">{cmd.label}</span>
                         {cmd.description && (
-                          <span style={{ fontSize: 11, color: 'var(--color-text-placeholder)' }}>
+                          <span className="text-[11px] text-[var(--color-text-placeholder)]">
                             {cmd.description}
                           </span>
                         )}
@@ -179,11 +184,10 @@ export default function CommandPalette({ open, onClose }: Props) {
           )}
         </div>
 
-        {/* Footer hint */}
-        <div className="flex items-center justify-end gap-3 px-4 py-2"
-          style={{ borderTop: '1px solid var(--color-border)' }}>
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-4 py-2 border-t border-[var(--color-border)]">
           {(['↑↓ 导航', '↵ 确认', 'ESC 关闭'] as const).map((hint) => (
-            <span key={hint} style={{ fontSize: 10, color: 'var(--color-text-placeholder)' }}>{hint}</span>
+            <span key={hint} className="text-[10px] text-[var(--color-text-placeholder)]">{hint}</span>
           ))}
         </div>
       </div>

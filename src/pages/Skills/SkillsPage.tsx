@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useSkillStore } from '@/stores/skillStore'
+import { filterSkills } from '@/lib/filterSkills'
 import SkillCard from '@/components/SkillCard/SkillCard'
 import SkillDetailPanel from '@/components/SkillDetailPanel/SkillDetailPanel'
 import SkillsToolbar from '@/components/SkillsToolbar/SkillsToolbar'
+import { useVirtualGrid } from '@/hooks/useVirtualGrid'
 
 export default function SkillsPage() {
   const {
@@ -13,6 +15,7 @@ export default function SkillsPage() {
     setSelectedSkill,
     viewMode,
     filterTool,
+    filterCategory,
     fetchSkills,
     scanSkills,
   } = useSkillStore()
@@ -32,20 +35,10 @@ export default function SkillsPage() {
     }
   }
 
-  // Filter skills
-  const filteredSkills = skills.filter((s) => {
-    if (filterTool && s.toolId !== filterTool) return false
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase()
-      return (
-        s.name.toLowerCase().includes(q) ||
-        s.description?.toLowerCase().includes(q) ||
-        s.tags.some((t) => t.toLowerCase().includes(q)) ||
-        s.note?.toLowerCase().includes(q)
-      )
-    }
-    return true
-  })
+  const filteredSkills = filterSkills(skills, { searchQuery, filterTool, filterCategory })
+
+  const { parentRef, virtualItems, totalHeight, getRowItems, colCount } =
+    useVirtualGrid(filteredSkills, viewMode)
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -53,8 +46,11 @@ export default function SkillsPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <SkillsToolbar onScan={handleScan} scanning={scanning} />
 
-        {/* Skills grid/list */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Skills grid/list — virtualised */}
+        <div
+          ref={parentRef}
+          className="flex-1 overflow-y-auto p-4"
+        >
           {loading && !skills.length ? (
             <div className="flex items-center justify-center h-full">
               <p style={{ color: 'var(--color-text-placeholder)', fontSize: 13 }}>加载中...</p>
@@ -84,21 +80,40 @@ export default function SkillsPage() {
               )}
             </div>
           ) : (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(240px, 1fr))' : '1fr',
-                gap: 12,
-              }}
-            >
-              {filteredSkills.map((skill) => (
-                <SkillCard
-                  key={skill.id}
-                  skill={skill}
-                  selected={selectedSkill?.id === skill.id}
-                  onClick={() => setSelectedSkill(skill)}
-                />
-              ))}
+            /* Virtual scroll outer — fixed height tells the browser the total scroll area */
+            <div style={{ height: totalHeight, position: 'relative' }}>
+              {virtualItems.map((virtualRow) => {
+                const rowItems = getRowItems(virtualRow.index)
+                return (
+                  <div
+                    key={virtualRow.key}
+                    data-index={virtualRow.index}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualRow.start}px)`,
+                      display: 'grid',
+                      gridTemplateColumns:
+                        viewMode === 'grid'
+                          ? `repeat(${colCount}, minmax(0, 1fr))`
+                          : '1fr',
+                      gap: 12,
+                      paddingBottom: 12,
+                    }}
+                  >
+                    {rowItems.map((skill) => (
+                      <SkillCard
+                        key={skill.id}
+                        skill={skill}
+                        selected={selectedSkill?.id === skill.id}
+                        onClick={() => setSelectedSkill(skill)}
+                      />
+                    ))}
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>

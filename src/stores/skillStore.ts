@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { invoke } from '@tauri-apps/api/core'
+import { mapSkill } from '@/lib/mapSkill'
 
 export interface Skill {
   id: string
@@ -66,22 +67,7 @@ export const useSkillStore = create<SkillState>((set, get) => ({
     try {
       const raw = await invoke<Skill[]>('list_skills')
       // camelCase conversion from snake_case
-      const skills = raw.map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        originalName: s.original_name,
-        description: s.description,
-        version: s.version,
-        installPath: s.install_path,
-        toolId: s.tool_id,
-        enabled: s.enabled,
-        installedAt: s.installed_at,
-        lastUsedAt: s.last_used_at,
-        usageCount: s.usage_count,
-        tags: s.tags ?? [],
-        categories: s.categories ?? [],
-        note: s.note,
-      }))
+      const skills = raw.map(mapSkill)
       set({ skills })
     } finally {
       set({ loading: false })
@@ -91,7 +77,17 @@ export const useSkillStore = create<SkillState>((set, get) => ({
   scanSkills: async () => {
     set({ loading: true })
     try {
-      const result = await invoke<ScanResult>('scan_skills')
+      const raw = await invoke<any>('scan_skills')
+      // Rust serialises as snake_case; map to the camelCase ScanResult interface
+      const result: ScanResult = {
+        total: raw.total,
+        byTool: (raw.by_tool ?? []).map((t: any) => ({
+          toolId:    t.tool_id,
+          toolName:  t.tool_name,
+          available: t.available,
+          count:     t.count,
+        })),
+      }
       await get().fetchSkills()
       return result
     } finally {

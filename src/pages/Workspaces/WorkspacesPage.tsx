@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Plus, Upload } from 'lucide-react'
+import { PlusIcon, UploadIcon } from '@/components/icons'
 import { useWorkspaceStore, type Workspace } from '@/stores/workspaceStore'
+import { Button } from '@/components/ui/button'
 import WorkspaceCard from '@/components/WorkspaceCard/WorkspaceCard'
 import WorkspaceForm from '@/components/WorkspaceForm/WorkspaceForm'
 
@@ -50,44 +51,32 @@ export default function WorkspacesPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 shrink-0"
-        style={{ borderBottom: '1px solid var(--color-border)' }}>
+      <div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-[var(--color-border)]">
         <div>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-            工作区
-          </h1>
-          <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>
+          <h1 className="text-[18px] font-bold text-[var(--color-text-primary)]">工作区</h1>
+          <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">
             按业务场景组织你的技能集
           </p>
         </div>
         <div className="flex items-center gap-2">
           {/* Import */}
-          <label style={{ cursor: 'pointer' }}>
-            <input type="file" accept=".yaml,.yml" onChange={handleImport}
-              style={{ display: 'none' }} />
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md"
-              style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)',
-                color: 'var(--color-text-secondary)', fontSize: 12, cursor: 'pointer' }}>
-              <Upload size={13} />
+          <label className="cursor-pointer">
+            <input type="file" accept=".yaml,.yml" onChange={handleImport} className="hidden" />
+            <div className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-[var(--color-bg-surface)] border border-[var(--color-border)] text-[var(--color-text-secondary)] text-xs cursor-pointer hover:bg-[var(--color-bg-hover)] transition-colors">
+              <UploadIcon size={13} />
               {importing ? '导入中...' : '导入 YAML'}
             </div>
           </label>
-          {/* Create */}
-          <button onClick={() => { setEditTarget(null); setShowForm(true) }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md"
-            style={{ background: 'var(--color-accent)', border: 'none',
-              color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-            <Plus size={13} />
+          <Button onClick={() => { setEditTarget(null); setShowForm(true) }} size="md">
+            <PlusIcon size={13} />
             新建工作区
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* Import result toast */}
+      {/* Import toast */}
       {importMsg && (
-        <div className="mx-6 mt-3 px-4 py-2.5 rounded-md"
-          style={{ background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)',
-            fontSize: 12, color: 'var(--color-text-secondary)' }}>
+        <div className="mx-6 mt-3 px-4 py-2.5 rounded-md bg-[var(--color-bg-surface)] border border-[var(--color-border)] text-[12px] text-[var(--color-text-secondary)]">
           {importMsg}
         </div>
       )}
@@ -96,19 +85,13 @@ export default function WorkspacesPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {workspaces.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-3">
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: 14 }}>
-              还没有工作区
-            </p>
-            <button onClick={() => setShowForm(true)}
-              style={{ background: 'var(--color-accent)', color: '#fff', border: 'none',
-                borderRadius: 'var(--radius-md)', padding: '8px 16px', fontSize: 12,
-                fontWeight: 600, cursor: 'pointer' }}>
+            <p className="text-[14px] text-[var(--color-text-secondary)]">还没有工作区</p>
+            <Button onClick={() => setShowForm(true)} size="lg">
               创建第一个工作区
-            </button>
+            </Button>
           </div>
         ) : (
-          <div style={{ display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
             {workspaces.map((ws) => (
               <WorkspaceCard
                 key={ws.id}
@@ -116,9 +99,7 @@ export default function WorkspacesPage() {
                 onActivate={() => activateWorkspace(ws.id)}
                 onEdit={() => { setEditTarget(ws); setShowForm(true) }}
                 onDelete={async () => {
-                  if (confirm(`确认删除工作区 "${ws.name}"？`)) {
-                    await deleteWorkspace(ws.id)
-                  }
+                  if (confirm(`确认删除工作区 "${ws.name}"？`)) await deleteWorkspace(ws.id)
                 }}
                 onExport={() => handleExport(ws)}
               />
@@ -127,16 +108,12 @@ export default function WorkspacesPage() {
         )}
       </div>
 
-      {/* Create/Edit form modal */}
       {showForm && (
         <WorkspaceForm
           initial={editTarget ?? undefined}
           onSave={async (data) => {
-            if (editTarget) {
-              await updateWorkspace(editTarget.id, data)
-            } else {
-              await createWorkspace(data)
-            }
+            if (editTarget) await updateWorkspace(editTarget.id, data)
+            else await createWorkspace(data)
           }}
           onClose={() => { setShowForm(false); setEditTarget(null) }}
         />

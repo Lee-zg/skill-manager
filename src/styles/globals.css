@@ -94,6 +94,7 @@ html, body, #root {
 
 .animate-fade-in  { animation: fadeIn 200ms var(--ease-standard) forwards; }
 .animate-slide-in { animation: slideInRight 200ms var(--ease-standard) forwards; }
+.animate-spin     { animation: spin 1s linear infinite; }
 
 /* ── Glass Utilities ── */
 .glass-panel {

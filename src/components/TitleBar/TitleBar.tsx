@@ -1,5 +1,6 @@
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { Minus, Square, X } from 'lucide-react'
+import { MinusIcon, SquareIcon, XIcon } from '@/components/icons'
+import { cn } from '@/lib/utils'
 
 export default function TitleBar() {
   const win = getCurrentWindow()
@@ -7,30 +8,31 @@ export default function TitleBar() {
   return (
     <header
       data-tauri-drag-region
-      className="flex items-center justify-between h-10 px-4 shrink-0 select-none"
-      style={{ background: 'var(--color-bg-panel)', borderBottom: '1px solid var(--color-border)' }}
+      className="flex items-center justify-between h-10 px-4 shrink-0 select-none bg-[var(--color-bg-panel)] border-b border-[var(--color-border)]"
     >
       {/* Left: App identity */}
       <div className="flex items-center gap-2 pointer-events-none">
-        <div
-          className="w-5 h-5 rounded"
-          style={{ background: 'var(--color-accent)' }}
-        />
-        <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+        {/* Logo mark */}
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="18" height="18" rx="4" fill="var(--color-accent)" />
+          <path d="M5 13 L9 5 L13 13" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <line x1="6.5" y1="10.5" x2="11.5" y2="10.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+        <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">
           SkillHub
         </span>
       </div>
 
       {/* Right: Window controls */}
       <div className="flex items-center gap-0.5" style={{ pointerEvents: 'auto' }}>
-        <WinBtn onClick={() => win.minimize()} title="Minimize">
-          <Minus size={12} />
+        <WinBtn onClick={() => win.minimize()} label="Minimize">
+          <MinusIcon size={12} />
         </WinBtn>
-        <WinBtn onClick={() => win.toggleMaximize()} title="Maximize">
-          <Square size={11} />
+        <WinBtn onClick={() => win.toggleMaximize()} label="Maximize">
+          <SquareIcon size={11} />
         </WinBtn>
-        <WinBtn onClick={() => win.close()} title="Close" danger>
-          <X size={12} />
+        <WinBtn onClick={() => win.close()} label="Close" danger>
+          <XIcon size={12} />
         </WinBtn>
       </div>
     </header>
@@ -40,35 +42,25 @@ export default function TitleBar() {
 function WinBtn({
   children,
   onClick,
-  title,
+  label,
   danger,
 }: {
   children: React.ReactNode
   onClick: () => void
-  title: string
+  label: string
   danger?: boolean
 }) {
   return (
     <button
       onClick={onClick}
-      title={title}
-      className="flex items-center justify-center w-8 h-7 rounded transition-colors"
-      style={{
-        color: 'var(--color-text-secondary)',
-        background: 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget
-        el.style.background = danger ? 'var(--color-danger)' : 'var(--color-bg-hover)'
-        el.style.color = danger ? '#fff' : 'var(--color-text-primary)'
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget
-        el.style.background = 'transparent'
-        el.style.color = 'var(--color-text-secondary)'
-      }}
+      aria-label={label}
+      className={cn(
+        'flex items-center justify-center w-8 h-7 rounded transition-colors duration-100',
+        'text-[var(--color-text-secondary)] bg-transparent border-none cursor-pointer',
+        danger
+          ? 'hover:bg-[var(--color-danger)] hover:text-white'
+          : 'hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]',
+      )}
     >
       {children}
     </button>

@@ -1,4 +1,6 @@
 import type { Skill } from '@/stores/skillStore'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 const TOOL_COLORS: Record<string, string> = {
   'claude-code': '#6366f1',
@@ -18,42 +20,27 @@ export default function SkillCard({ skill, selected, onClick }: Props) {
   return (
     <button
       onClick={onClick}
+      className={cn(
+        'w-full text-left rounded-md p-3 border transition-all duration-150 cursor-pointer',
+        'hover:-translate-y-px',
+        selected
+          ? 'bg-[var(--color-bg-surface)]'
+          : 'bg-[var(--color-bg-panel)] hover:bg-[var(--color-bg-surface)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.25)]',
+      )}
       style={{
-        background: selected ? 'var(--color-bg-surface)' : 'var(--color-bg-panel)',
-        border: `1px solid ${selected ? accentColor : 'var(--color-border)'}`,
-        borderRadius: 'var(--radius-md)',
-        padding: '12px',
-        width: '100%',
-        textAlign: 'left',
-        cursor: 'pointer',
-        transition: 'all var(--duration-fast) var(--ease-standard)',
+        borderColor: selected ? accentColor : 'var(--color-border)',
         boxShadow: selected
           ? `0 0 0 1px ${accentColor}40, 0 4px 12px rgba(0,0,0,0.3)`
           : '0 2px 8px rgba(0,0,0,0.15)',
       }}
-      onMouseEnter={(e) => {
-        if (!selected) {
-          e.currentTarget.style.background = 'var(--color-bg-surface)'
-          e.currentTarget.style.transform = 'translateY(-1px)'
-          e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.25)'
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!selected) {
-          e.currentTarget.style.background = 'var(--color-bg-panel)'
-          e.currentTarget.style.transform = 'translateY(0)'
-          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)'
-        }
-      }}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        {/* Icon placeholder + name */}
         <div className="flex items-center gap-2 min-w-0">
+          {/* Icon */}
           <div
-            className="flex items-center justify-center text-xs font-bold rounded shrink-0"
+            className="flex items-center justify-center text-xs font-bold rounded shrink-0 w-7 h-7"
             style={{
-              width: 28, height: 28,
               background: `${accentColor}22`,
               color: accentColor,
               border: `1px solid ${accentColor}44`,
@@ -61,10 +48,7 @@ export default function SkillCard({ skill, selected, onClick }: Props) {
           >
             {skill.name.charAt(0).toUpperCase()}
           </div>
-          <span
-            className="font-medium truncate"
-            style={{ fontSize: 13, color: 'var(--color-text-primary)' }}
-          >
+          <span className="text-[13px] font-medium truncate text-[var(--color-text-primary)]">
             {skill.name}
           </span>
         </div>
@@ -78,48 +62,38 @@ export default function SkillCard({ skill, selected, onClick }: Props) {
       </div>
 
       {/* Description */}
-      <p
-        className="line-clamp-2 mb-3"
-        style={{ fontSize: 11, color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: 0 }}
-      >
+      <p className="text-[11px] leading-relaxed text-[var(--color-text-secondary)] line-clamp-2 mb-3">
         {skill.description ?? '暂无描述'}
       </p>
 
-      {/* Footer: tool badge + tags */}
-      <div className="flex items-center justify-between gap-2 mt-auto">
+      {/* Footer */}
+      <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1 flex-wrap">
           {skill.categories.slice(0, 2).map((cat) => (
-            <span key={cat} style={{
-              fontSize: 10, padding: '1px 6px',
-              background: 'var(--color-bg-hover)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-full)',
-              color: 'var(--color-text-secondary)',
-            }}>
-              {cat}
-            </span>
+            <Badge key={cat} variant="default">{cat}</Badge>
           ))}
           {skill.tags.slice(0, 2).map((tag) => (
-            <span key={tag} style={{
-              fontSize: 10, padding: '1px 6px',
-              background: `${accentColor}15`,
-              border: `1px solid ${accentColor}30`,
-              borderRadius: 'var(--radius-full)',
-              color: accentColor,
-            }}>
+            <span
+              key={tag}
+              className="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium"
+              style={{
+                background: `${accentColor}15`,
+                borderColor: `${accentColor}30`,
+                color: accentColor,
+              }}
+            >
               #{tag}
             </span>
           ))}
         </div>
-
-        {/* Tool badge */}
-        <span style={{
-          fontSize: 10, padding: '2px 7px', whiteSpace: 'nowrap',
-          background: `${accentColor}15`,
-          border: `1px solid ${accentColor}30`,
-          borderRadius: 'var(--radius-full)',
-          color: accentColor, fontWeight: 500,
-        }}>
+        <span
+          className="text-[10px] px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap"
+          style={{
+            background: `${accentColor}15`,
+            borderColor: `${accentColor}30`,
+            color: accentColor,
+          }}
+        >
           {skill.toolId}
         </span>
       </div>
