@@ -1,6 +1,7 @@
 mod adapters;
 mod commands;
 mod db;
+mod installer;
 mod utils;
 
 use commands::skills::{
@@ -19,6 +20,10 @@ use commands::workspaces::{
     delete_workspace_cmd, activate_workspace_cmd,
     list_workspace_skills_cmd, add_skill_to_workspace_cmd, remove_skill_from_workspace_cmd,
     export_workspace_yaml, import_workspace_yaml,
+};
+use commands::repositories::{
+    list_repositories_cmd, add_repository_cmd, toggle_repository_cmd, delete_repository_cmd,
+    search_registry_cmd, install_skill_cmd, update_skill_cmd, check_updates_cmd,
 };
 use std::sync::Mutex;
 use tauri::{
@@ -98,6 +103,14 @@ pub fn run() {
             remove_skill_from_workspace_cmd,
             export_workspace_yaml,
             import_workspace_yaml,
+            list_repositories_cmd,
+            add_repository_cmd,
+            toggle_repository_cmd,
+            delete_repository_cmd,
+            search_registry_cmd,
+            install_skill_cmd,
+            update_skill_cmd,
+            check_updates_cmd,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
