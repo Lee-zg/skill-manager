@@ -88,6 +88,35 @@ html, body, #root {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* ── Animations ── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-in   { animation: fadeIn 200ms var(--ease-standard) forwards; }
+.animate-slide-in  { animation: slideInRight 200ms var(--ease-standard) forwards; }
+
+/* ── Focus ring ── */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Disabled ── */
+[disabled] { opacity: 0.5; cursor: not-allowed !important; }
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }

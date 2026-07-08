@@ -25,6 +25,10 @@ use commands::repositories::{
     list_repositories_cmd, add_repository_cmd, toggle_repository_cmd, delete_repository_cmd,
     search_registry_cmd, install_skill_cmd, update_skill_cmd, check_updates_cmd,
 };
+use commands::settings::{
+    get_settings, update_settings, get_tool_paths, get_app_stats,
+    AppSettings, SettingsState,
+};
 use std::sync::Mutex;
 use tauri::{
     menu::{Menu, MenuItem},
@@ -46,6 +50,9 @@ pub fn run() {
             // Init DB
             let conn = db::open().expect("Failed to open database");
             app.manage(DbState(Mutex::new(conn)));
+
+            // Init Settings
+            app.manage(SettingsState(Mutex::new(AppSettings::default())));
 
             // System tray
             let toggle = MenuItem::with_id(app, "toggle", "显示/隐藏", true, None::<&str>)?;
@@ -111,6 +118,10 @@ pub fn run() {
             install_skill_cmd,
             update_skill_cmd,
             check_updates_cmd,
+            get_settings,
+            update_settings,
+            get_tool_paths,
+            get_app_stats,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

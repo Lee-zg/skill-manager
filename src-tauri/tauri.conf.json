@@ -43,11 +43,38 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": []
+    "windows": {
+      "nsis": {
+        "installMode": "perMachine",
+        "languages": ["SimpChinese", "English"],
+        "displayLanguageSelector": false
+      },
+      "wix": null
+    },
+    "macOS": {
+      "dmg": {
+        "background": null,
+        "windowSize": { "width": 540, "height": 380 }
+      },
+      "minimumSystemVersion": "12.0"
+    },
+    "linux": {
+      "deb": { "depends": [] },
+      "appimage": { "bundleMediaFramework": true }
+    },
+    "resources": [],
+    "copyright": "© 2026 SkillHub",
+    "category": "DeveloperTool",
+    "shortDescription": "AI Skills Management Tool",
+    "longDescription": "SkillHub - A desktop tool for managing, discovering and installing AI coding skills across Claude Code, Agents and other tools."
   },
   "plugins": {
     "sql": {
       "preloadConnections": ["sqlite:skillhub.db"]
+    },
+    "updater": {
+      "pubkey": "",
+      "endpoints": []
     }
   }
 }
