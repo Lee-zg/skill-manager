@@ -1,5 +1,6 @@
 pub mod categories;
 pub mod metadata;
+pub mod workspaces;
 
 use anyhow::{Context, Result};
 use rusqlite::{params, Connection};

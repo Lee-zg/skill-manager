@@ -14,6 +14,12 @@ use commands::metadata::{
     upsert_note_cmd,
     add_alias_cmd, remove_alias_cmd, rename_skill_cmd,
 };
+use commands::workspaces::{
+    list_workspaces_cmd, create_workspace_cmd, update_workspace_cmd,
+    delete_workspace_cmd, activate_workspace_cmd,
+    list_workspace_skills_cmd, add_skill_to_workspace_cmd, remove_skill_from_workspace_cmd,
+    export_workspace_yaml, import_workspace_yaml,
+};
 use std::sync::Mutex;
 use tauri::{
     menu::{Menu, MenuItem},
@@ -82,6 +88,16 @@ pub fn run() {
             add_alias_cmd,
             remove_alias_cmd,
             rename_skill_cmd,
+            list_workspaces_cmd,
+            create_workspace_cmd,
+            update_workspace_cmd,
+            delete_workspace_cmd,
+            activate_workspace_cmd,
+            list_workspace_skills_cmd,
+            add_skill_to_workspace_cmd,
+            remove_skill_from_workspace_cmd,
+            export_workspace_yaml,
+            import_workspace_yaml,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
