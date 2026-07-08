@@ -1,3 +1,6 @@
+pub mod categories;
+pub mod metadata;
+
 use anyhow::{Context, Result};
 use rusqlite::{params, Connection};
 use std::path::PathBuf;

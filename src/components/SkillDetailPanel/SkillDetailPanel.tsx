@@ -1,5 +1,8 @@
-import { X, Power, Trash2, Tag, FolderOpen, Clock, BarChart2 } from 'lucide-react'
+import { useState } from 'react'
+import { X, Power, Trash2, FolderOpen, Clock, BarChart2 } from 'lucide-react'
 import { useSkillStore, type Skill } from '@/stores/skillStore'
+import TagEditor from '@/components/TagEditor/TagEditor'
+import NoteEditor from '@/components/NoteEditor/NoteEditor'
 
 interface Props {
   skill: Skill
@@ -8,6 +11,8 @@ interface Props {
 
 export default function SkillDetailPanel({ skill, onClose }: Props) {
   const { toggleSkill, uninstallSkill } = useSkillStore()
+  const [tags, setTags] = useState(skill.tags)
+  const [note, setNote] = useState(skill.note ?? '')
 
   const handleToggle = async () => {
     await toggleSkill(skill.id, skill.installPath, skill.toolId, !skill.enabled)
@@ -102,30 +107,14 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
           </div>
         </Section>
 
-        {/* Tags */}
-        <Section label="标签" icon={<Tag size={12} />}>
-          <div className="flex flex-wrap gap-1.5">
-            {skill.tags.length > 0
-              ? skill.tags.map((t) => <Chip key={t} label={`#${t}`} accent />)
-              : <span style={{ fontSize: 11, color: 'var(--color-text-placeholder)' }}>暂无标签</span>
-            }
-          </div>
+        {/* Tags — editable */}
+        <Section label="标签">
+          <TagEditor skillId={skill.id} tags={tags} onChanged={setTags} />
         </Section>
 
-        {/* Notes */}
+        {/* Notes — editable */}
         <Section label="备注">
-          <div
-            className="rounded p-2.5 min-h-16"
-            style={{
-              background: 'var(--color-bg-surface)',
-              border: '1px solid var(--color-border)',
-              fontSize: 12,
-              color: skill.note ? 'var(--color-text-secondary)' : 'var(--color-text-placeholder)',
-              lineHeight: 1.6,
-            }}
-          >
-            {skill.note ?? '点击添加备注...'}
-          </div>
+          <NoteEditor skillId={skill.id} note={note} onChanged={setNote} />
         </Section>
 
         {/* Install path */}

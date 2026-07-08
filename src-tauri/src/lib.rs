@@ -7,6 +7,13 @@ use commands::skills::{
     detect_tools, list_skills, scan_skills, search_skills, toggle_skill, uninstall_skill,
     DbState,
 };
+use commands::metadata::{
+    list_categories_cmd, create_category_cmd, update_category_cmd, delete_category_cmd,
+    set_skill_category_cmd, remove_skill_category_cmd,
+    add_tag_cmd, remove_tag_cmd, list_all_tags_cmd,
+    upsert_note_cmd,
+    add_alias_cmd, remove_alias_cmd, rename_skill_cmd,
+};
 use std::sync::Mutex;
 use tauri::{
     menu::{Menu, MenuItem},
@@ -62,6 +69,19 @@ pub fn run() {
             toggle_skill,
             uninstall_skill,
             detect_tools,
+            list_categories_cmd,
+            create_category_cmd,
+            update_category_cmd,
+            delete_category_cmd,
+            set_skill_category_cmd,
+            remove_skill_category_cmd,
+            add_tag_cmd,
+            remove_tag_cmd,
+            list_all_tags_cmd,
+            upsert_note_cmd,
+            add_alias_cmd,
+            remove_alias_cmd,
+            rename_skill_cmd,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import TitleBar from '@/components/TitleBar/TitleBar'
 import Sidebar from '@/components/Sidebar/Sidebar'
 import OnboardingScreen from '@/components/Onboarding/OnboardingScreen'
+import CommandPalette from '@/components/CommandPalette/CommandPalette'
 import SkillsPage from '@/pages/Skills/SkillsPage'
 import WorkspacesPage from '@/pages/Workspaces/WorkspacesPage'
 import DiscoverPage from '@/pages/Discover/DiscoverPage'
@@ -15,6 +16,19 @@ export default function App() {
   const [onboarded, setOnboarded] = useState(
     () => localStorage.getItem(ONBOARDING_KEY) === 'true',
   )
+  const [cmdOpen, setCmdOpen] = useState(false)
+
+  // Global ⌘K / Ctrl+K shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setCmdOpen((v) => !v)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   const handleOnboardingComplete = () => {
     localStorage.setItem(ONBOARDING_KEY, 'true')
@@ -46,6 +60,7 @@ export default function App() {
           </Routes>
         </main>
       </div>
+      <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
     </div>
   )
 }

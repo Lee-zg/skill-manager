@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { Layers, LayoutGrid, Compass, Package, Settings } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import CategoryTree from '@/components/CategoryTree/CategoryTree'
 
 const NAV_ITEMS = [
   { to: '/skills',     icon: Layers,      label: '技能库' },
@@ -12,18 +13,19 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   const location = useLocation()
   const { activeWorkspace } = useWorkspaceStore()
+  const isSkillsPage = location.pathname.startsWith('/skills')
 
   return (
     <aside
-      className="flex flex-col shrink-0 h-full"
+      className="flex flex-col shrink-0 h-full overflow-hidden"
       style={{
-        width: 160,
+        width: 180,
         background: 'var(--color-bg-panel)',
         borderRight: '1px solid var(--color-border)',
       }}
     >
       {/* Nav items */}
-      <nav className="flex-1 flex flex-col gap-0.5 p-2 pt-3">
+      <nav className="flex flex-col gap-0.5 p-2 pt-3 shrink-0">
         {NAV_ITEMS.map(({ to, icon: Icon, label }) => {
           const active = location.pathname.startsWith(to)
           return (
@@ -50,6 +52,23 @@ export default function Sidebar() {
           )
         })}
       </nav>
+
+      {/* Category tree — only on Skills page */}
+      {isSkillsPage && (
+        <>
+          <div style={{ height: 1, background: 'var(--color-border)', margin: '4px 8px' }} />
+          <div
+            className="flex-1 overflow-y-auto"
+            style={{ padding: '4px 0' }}
+          >
+            <p style={{ fontSize: 10, color: 'var(--color-text-placeholder)', padding: '4px 12px 2px',
+              textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
+              分类
+            </p>
+            <CategoryTree />
+          </div>
+        </>
+      )}
 
       {/* Divider */}
       <div style={{ height: 1, background: 'var(--color-border)', margin: '0 8px' }} />
