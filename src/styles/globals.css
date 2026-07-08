@@ -1,26 +1,38 @@
 @import "tailwindcss";
 
-/* ── Design Tokens ── */
+/* ── Tailwind Design Tokens (@theme only accepts Tailwind-compatible values) ── */
 @theme {
   /* Colors */
-  --color-bg-base:      #0d0d0f;
-  --color-bg-panel:     #141416;
-  --color-bg-surface:   #1c1c1f;
-  --color-bg-hover:     #222226;
-  --color-border:       #2a2a2e;
-  --color-border-light: rgba(255,255,255,0.06);
+  --color-bg-base:       #0d0d0f;
+  --color-bg-panel:      #141416;
+  --color-bg-surface:    #1c1c1f;
+  --color-bg-hover:      #222226;
+  --color-border:        #2a2a2e;
 
   --color-text-primary:     #f0f0f2;
   --color-text-secondary:   #8a8a94;
   --color-text-placeholder: #4a4a54;
 
-  --color-accent:         #6366f1;
-  --color-accent-hover:   #818cf8;
-  --color-accent-muted:   rgba(99,102,241,0.15);
-  --color-success:        #22c55e;
-  --color-warning:        #f59e0b;
-  --color-danger:         #ef4444;
+  --color-accent:       #6366f1;
+  --color-accent-hover: #818cf8;
+  --color-success:      #22c55e;
+  --color-warning:      #f59e0b;
+  --color-danger:       #ef4444;
 
+  /* Fonts */
+  --font-sans: Geist, Outfit, system-ui, -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
+
+  /* Border radius */
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   10px;
+  --radius-xl:   12px;
+  --radius-full: 9999px;
+}
+
+/* ── Non-Tailwind tokens go in :root ── */
+:root {
   /* Spacing */
   --spacing-xs:  4px;
   --spacing-sm:  8px;
@@ -30,17 +42,9 @@
   --spacing-2xl: 32px;
   --spacing-3xl: 48px;
 
-  /* Radius */
-  --radius-sm:   4px;
-  --radius-md:   6px;
-  --radius-lg:   10px;
-  --radius-xl:   12px;
-  --radius-full: 9999px;
-
-  /* Fonts */
-  --font-sans: "Geist", "Outfit", system-ui, -apple-system, "Microsoft YaHei",
-               "PingFang SC", sans-serif;
-  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
+  /* Color extras (not Tailwind tokens) */
+  --color-border-light:  rgba(255, 255, 255, 0.06);
+  --color-accent-muted:  rgba(99, 102, 241, 0.15);
 
   /* Easing */
   --ease-standard:  cubic-bezier(0.4, 0, 0.2, 1);
@@ -72,22 +76,6 @@ html, body, #root {
   overflow: hidden;
 }
 
-/* ── Glass Utilities ── */
-.glass-panel {
-  background: rgba(20, 20, 22, 0.85);
-  backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-.glass-card {
-  background: rgba(28, 28, 31, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
 /* ── Animations ── */
 @keyframes spin {
   from { transform: rotate(0deg); }
@@ -104,8 +92,24 @@ html, body, #root {
   to   { opacity: 1; transform: translateX(0); }
 }
 
-.animate-fade-in   { animation: fadeIn 200ms var(--ease-standard) forwards; }
-.animate-slide-in  { animation: slideInRight 200ms var(--ease-standard) forwards; }
+.animate-fade-in  { animation: fadeIn 200ms var(--ease-standard) forwards; }
+.animate-slide-in { animation: slideInRight 200ms var(--ease-standard) forwards; }
+
+/* ── Glass Utilities ── */
+.glass-panel {
+  background: rgba(20, 20, 22, 0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-card {
+  background: rgba(28, 28, 31, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
 
 /* ── Focus ring ── */
 :focus-visible {
@@ -113,9 +117,6 @@ html, body, #root {
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
-
-/* ── Disabled ── */
-[disabled] { opacity: 0.5; cursor: not-allowed !important; }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
