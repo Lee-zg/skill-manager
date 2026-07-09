@@ -8,6 +8,7 @@ import SkillsPage from '@/pages/Skills/SkillsPage'
 import WorkspacesPage from '@/pages/Workspaces/WorkspacesPage'
 import DiscoverPage from '@/pages/Discover/DiscoverPage'
 import ReposPage from '@/pages/Repos/ReposPage'
+import InvocationsPage from '@/pages/Invocations/InvocationsPage'
 import SettingsPage from '@/pages/Settings/SettingsPage'
 import { STORAGE_KEYS, migrateLocalStorageKey } from '@/lib/appMeta'
 
@@ -58,6 +59,7 @@ export default function App() {
             <Route path="/workspaces" element={<WorkspacesPage />} />
             <Route path="/discover" element={<DiscoverPage />} />
             <Route path="/repos" element={<ReposPage />} />
+            <Route path="/invocations" element={<InvocationsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </main>

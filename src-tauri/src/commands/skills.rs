@@ -8,6 +8,7 @@ use crate::{
         tools::{AgentsAdapter, CcSwitchAdapter, ClaudeCodeAdapter},
         ToolAdapter,
     },
+    core::install::unlink_installation,
     db::{self, SkillRow},
 };
 
@@ -129,6 +130,16 @@ pub fn uninstall_skill(
     tool_id: String,
     state: State<'_, DbState>,
 ) -> Result<(), String> {
+    {
+        let conn = state.0.lock().map_err(|e| e.to_string())?;
+        if db::canonical::get_installation(&conn, &id)
+            .map_err(|e| e.to_string())?
+            .is_some()
+        {
+            return unlink_installation(&conn, &id).map_err(|e| e.to_string());
+        }
+    }
+
     let adapter: Box<dyn ToolAdapter> = match tool_id.as_str() {
         "claude-code" => Box::new(ClaudeCodeAdapter),
         "agents"      => Box::new(AgentsAdapter),

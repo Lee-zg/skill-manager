@@ -20,7 +20,10 @@ interface RepoState {
     name: string; url: string; repoType: string
     branch: string; skillsDir: string; priority: number
   }) => Promise<void>
-  syncRepo: (id: string) => Promise<{ scannedSkills: number; message: string }>
+  syncRepo: (id: string) => Promise<{
+    scannedSkills: number; added: number; updated: number; removed: number
+    errors: string[]; message: string
+  }>
   toggleRepo: (id: string, enabled: boolean) => Promise<void>
   deleteRepo: (id: string) => Promise<void>
 }
@@ -50,6 +53,10 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     await get().fetchRepos()
     return {
       scannedSkills: raw.scanned_skills ?? 0,
+      added: raw.added ?? 0,
+      updated: raw.updated ?? 0,
+      removed: raw.removed ?? 0,
+      errors: raw.errors ?? [],
       message: raw.message ?? '同步完成',
     }
   },

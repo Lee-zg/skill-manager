@@ -16,11 +16,13 @@ pub struct RemoteSkill {
     pub tags: Vec<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 struct SkillsShResponse {
     skills: Vec<SkillsShEntry>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 struct SkillsShEntry {
     id: Option<String>,
@@ -168,7 +170,7 @@ pub fn update_skill_via_npx(skill_name: &str, tool_id: &str) -> Result<InstallRe
     })
 }
 
-fn get_tool_skills_dir(tool_id: &str) -> Option<std::path::PathBuf> {
+pub fn get_tool_skills_dir(tool_id: &str) -> Option<std::path::PathBuf> {
     let home = dirs_next::home_dir()?;
     let path = match tool_id {
         "claude-code" => home.join(".claude").join("skills"),

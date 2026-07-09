@@ -5,6 +5,7 @@ import {
   CheckCircleIcon, AlertCircleIcon, Loader2Icon,
 } from '@/components/icons'
 import { useUpdater } from '@/hooks/useUpdater'
+import { useTargetStore } from '@/stores/targetStore'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
@@ -43,10 +44,13 @@ export default function SettingsPage() {
   const [toolPaths, setToolPaths] = useState<ToolPath[]>([])
   const [stats, setStats] = useState<AppStats | null>(null)
   const [saved, setSaved] = useState(false)
+  const [doctorMessage, setDoctorMessage] = useState('')
 
   const { status: updateStatus, checkUpdate, install } = useUpdater()
+  const { targets, doctorReport, fetchTargets, checkDoctor, repair } = useTargetStore()
 
   useEffect(() => {
+    fetchTargets()
     Promise.all([
       invoke<any>('get_settings'),
       invoke<any[]>('get_tool_paths'),
@@ -67,7 +71,7 @@ export default function SettingsPage() {
         totalWorkspaces: st.total_workspaces, totalCategories: st.total_categories,
       })
     }).catch(console.error)
-  }, [])
+  }, [fetchTargets])
 
   const handleSave = async () => {
     await invoke('update_settings', {
@@ -78,6 +82,20 @@ export default function SettingsPage() {
     })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  const handleDoctor = async () => {
+    const report = await checkDoctor()
+    setDoctorMessage(report.issues.length > 0
+      ? `检查完成：${report.issues.length} 个映射需要处理。`
+      : `检查完成：${report.checked} 个映射正常。`)
+  }
+
+  const handleRepair = async () => {
+    const report = await repair()
+    setDoctorMessage(report.issues.length > 0
+      ? `修复后仍有 ${report.issues.length} 个问题。`
+      : '修复完成，未发现剩余问题。')
   }
 
   return (
@@ -173,6 +191,54 @@ export default function SettingsPage() {
                     {tp.path}
                   </p>
                 </div>
+              </div>
+            </div>
+          ))}
+        </Section>
+
+        <Section title="目标适配器">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div>
+              <p className="text-[13px] font-medium text-[var(--color-text-primary)]">映射健康检查</p>
+              <p className="mt-0.5 text-[11px] text-[var(--color-text-secondary)]">
+                检测 canonical store 到目标工具目录的受管映射是否缺失
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={handleDoctor}>
+                <RefreshCwIcon size={12} /> Doctor
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleRepair}>
+                修复
+              </Button>
+            </div>
+          </div>
+          {doctorMessage && (
+            <p className="px-4 pb-2 text-[12px] text-[var(--color-text-secondary)]">{doctorMessage}</p>
+          )}
+          {doctorReport?.issues.map((issue) => (
+            <div key={issue.installationId} className="border-t border-[var(--color-border)] px-4 py-2">
+              <p className="text-[12px] text-[var(--color-danger)]">{issue.message}</p>
+              <p className="mt-0.5 truncate text-[10px] text-[var(--color-text-placeholder)]">{issue.path}</p>
+            </div>
+          ))}
+          <Separator />
+          {targets.map((target) => (
+            <div key={target.toolId} className="flex items-center gap-3 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-medium text-[var(--color-text-primary)]">{target.name}</span>
+                  <Badge variant={target.available ? 'success' : 'default'}>
+                    {target.available ? '已检测' : '目录未创建'}
+                  </Badge>
+                  {target.requiresMaterializedAlias && <Badge variant="accent">alias wrapper</Badge>}
+                </div>
+                <p className="mt-0.5 truncate text-[11px] text-[var(--color-text-placeholder)]" style={{ fontFamily: 'var(--font-mono)' }}>
+                  {target.userDir || '无法确定用户目录'}
+                </p>
+                {target.refreshHint && (
+                  <p className="mt-0.5 text-[11px] text-[var(--color-text-secondary)]">{target.refreshHint}</p>
+                )}
               </div>
             </div>
           ))}

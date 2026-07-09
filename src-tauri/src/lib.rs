@@ -1,6 +1,7 @@
 mod app_meta;
 mod adapters;
 mod commands;
+mod core;
 mod db;
 mod installer;
 mod utils;
@@ -24,11 +25,23 @@ use commands::workspaces::{
 };
 use commands::repositories::{
     list_repositories_cmd, add_repository_cmd, toggle_repository_cmd, delete_repository_cmd,
-    sync_repository_cmd, search_registry_cmd, install_skill_cmd, update_skill_cmd, check_updates_cmd,
+    sync_repository_cmd, search_registry_cmd, search_market_skills_cmd,
+    install_skill_cmd, install_market_skill_cmd, update_skill_cmd, check_updates_cmd,
+};
+use commands::invocations::{
+    add_config_mappings_cmd, list_config_mappings_cmd, list_tool_invocation_profiles_cmd,
+    list_invocations_cmd, remove_invocation_cmd,
+    list_invocation_routes_cmd, preview_config_mappings_cmd, preview_invocations_cmd,
+    preview_invocation_routes_cmd, remove_config_mapping_cmd, remove_invocation_route_cmd,
+    resolve_invocation_route_cmd,
 };
 use commands::settings::{
     get_settings, update_settings, get_tool_paths, get_app_stats,
     AppSettings, SettingsState,
+};
+use commands::canonical::{
+    doctor_cmd, install_canonical_skill_cmd, link_skill_cmd, list_audit_events_cmd,
+    list_targets_cmd, preview_install_cmd, repair_cmd, set_target_alias_cmd, unlink_skill_cmd,
 };
 use std::sync::Mutex;
 use app_meta::APP_NAME;
@@ -120,13 +133,36 @@ pub fn run() {
             delete_repository_cmd,
             sync_repository_cmd,
             search_registry_cmd,
+            search_market_skills_cmd,
             install_skill_cmd,
+            install_market_skill_cmd,
             update_skill_cmd,
             check_updates_cmd,
+            list_tool_invocation_profiles_cmd,
+            preview_invocations_cmd,
+            list_invocations_cmd,
+            remove_invocation_cmd,
+            resolve_invocation_route_cmd,
+            preview_config_mappings_cmd,
+            add_config_mappings_cmd,
+            list_config_mappings_cmd,
+            remove_config_mapping_cmd,
+            preview_invocation_routes_cmd,
+            list_invocation_routes_cmd,
+            remove_invocation_route_cmd,
             get_settings,
             update_settings,
             get_tool_paths,
             get_app_stats,
+            list_targets_cmd,
+            preview_install_cmd,
+            install_canonical_skill_cmd,
+            link_skill_cmd,
+            unlink_skill_cmd,
+            set_target_alias_cmd,
+            doctor_cmd,
+            repair_cmd,
+            list_audit_events_cmd,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

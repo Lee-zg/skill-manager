@@ -9,6 +9,9 @@ pub struct SkillMetadata {
     pub description: String,
     pub source: String,
     pub version: String,
+    pub author: String,
+    pub tags: Vec<String>,
+    pub categories: Vec<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -17,6 +20,34 @@ struct SkillFrontmatter {
     description: Option<String>,
     source: Option<String>,
     version: Option<String>,
+    author: Option<String>,
+    tags: Option<StringList>,
+    categories: Option<StringList>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum StringList {
+    One(String),
+    Many(Vec<String>),
+}
+
+impl StringList {
+    fn into_vec(self) -> Vec<String> {
+        match self {
+            Self::One(value) => value
+                .split(',')
+                .map(str::trim)
+                .filter(|item| !item.is_empty())
+                .map(String::from)
+                .collect(),
+            Self::Many(values) => values
+                .into_iter()
+                .map(|value| value.trim().to_string())
+                .filter(|item| !item.is_empty())
+                .collect(),
+        }
+    }
 }
 
 pub fn parse_skill_md(path: &Path) -> Result<SkillMetadata> {
@@ -36,6 +67,9 @@ pub fn parse_skill_md(path: &Path) -> Result<SkillMetadata> {
         description: parsed.description.unwrap_or_default(),
         source: parsed.source.unwrap_or_default(),
         version: parsed.version.unwrap_or_default(),
+        author: parsed.author.unwrap_or_default(),
+        tags: parsed.tags.map(StringList::into_vec).unwrap_or_default(),
+        categories: parsed.categories.map(StringList::into_vec).unwrap_or_default(),
     })
 }
 

@@ -6,6 +6,7 @@ import {
 } from '@/components/icons'
 import { useSkillStore, type Skill } from '@/stores/skillStore'
 import { useCategoryStore } from '@/stores/categoryStore'
+import { useInvocationStore } from '@/stores/invocationStore'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -20,6 +21,7 @@ interface Props {
 
 export default function SkillDetailPanel({ skill, onClose }: Props) {
   const { toggleSkill, uninstallSkill, fetchSkills, setSelectedSkill } = useSkillStore()
+  const { addConfigMappings } = useInvocationStore()
   const {
     categories, fetchCategories, setSkillCategory, removeSkillCategory,
   } = useCategoryStore()
@@ -32,6 +34,7 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
   const [categoryIds, setCategoryIds] = useState(skill.categoryIds)
   const [confirmUninstall, setConfirmUninstall] = useState(false)
   const [updating, setUpdating] = useState(false)
+  const [mapping, setMapping] = useState(false)
   const [feedback, setFeedback] = useState('')
 
   useEffect(() => {
@@ -120,13 +123,38 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
     }
   }
 
+  const handleAddSkillMapping = async () => {
+    setMapping(true)
+    setFeedback('')
+    try {
+      const result = await addConfigMappings({
+        targetType: 'skill',
+        targetId: skill.id,
+        toolId: 'codex',
+        scope: 'user',
+        mode: 'auto',
+      })
+      const firstRoute = result.routes[0]
+      const firstEntry = firstRoute?.exports[0]?.actualInvocation
+      setFeedback(
+        result.conflicts
+          ? `已添加映射，但有 ${result.conflicts} 个冲突需要处理。`
+          : `已添加映射 ${firstRoute?.displayPath ?? `/${displayName}`}；目标入口：${firstEntry ?? '/skills'}。`,
+      )
+    } catch (err) {
+      setFeedback(`映射失败：${String(err)}`)
+    } finally {
+      setMapping(false)
+    }
+  }
+
   const formatDate = (ts?: number) =>
     ts ? new Date(ts * 1000).toLocaleDateString('zh-CN') : '—'
 
   return (
     <aside
       className="flex flex-col h-full overflow-hidden border-l border-[var(--color-border)] bg-[var(--color-bg-panel)]"
-      style={{ width: 360 }}
+      style={{ width: 420 }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 shrink-0 border-b border-[var(--color-border)]">
@@ -166,19 +194,19 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
                         setRenaming(false)
                       }
                     }}
-                    className="min-w-0 flex-1 rounded-md border border-[var(--color-accent)] bg-[var(--color-bg-surface)] px-2 py-1 text-[13px] text-[var(--color-text-primary)] outline-none"
+                    className="min-w-0 flex-1 rounded-md border border-[var(--color-accent)] bg-[var(--color-bg-surface)] px-3 py-2 text-[15px] text-[var(--color-text-primary)] outline-none"
                   />
                   <Button size="icon" variant="ghost" onClick={handleRename} aria-label="保存名称">
-                    <CheckIcon size={13} />
+                    <CheckIcon size={16} />
                   </Button>
                 </div>
               ) : (
                 <div className="flex items-center gap-1">
-                  <p className="font-semibold truncate text-[15px] text-[var(--color-text-primary)]">
+                  <p className="truncate text-[18px] font-semibold text-[var(--color-text-primary)]">
                     {displayName}
                   </p>
                   <Button size="icon" variant="ghost" onClick={() => setRenaming(true)} aria-label="重命名">
-                    <PencilIcon size={12} />
+                    <PencilIcon size={16} />
                   </Button>
                 </div>
               )}
@@ -187,7 +215,7 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
                   className="w-1.5 h-1.5 rounded-full"
                   style={{ background: skill.enabled ? 'var(--color-success)' : 'var(--color-text-placeholder)' }}
                 />
-                <span className="text-[11px] text-[var(--color-text-secondary)]">
+                <span className="text-[14px] text-[var(--color-text-secondary)]">
                   {skill.enabled ? '已启用' : '已禁用'} · {skill.toolId}
                   {skill.version ? ` · v${skill.version}` : ''}
                 </span>
@@ -197,17 +225,17 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
 
           {/* Description */}
           {skill.description && (
-            <p className="text-[12px] text-[var(--color-text-secondary)] leading-relaxed">
+            <p className="text-[15px] leading-relaxed text-[var(--color-text-secondary)]">
               {skill.description}
             </p>
           )}
 
           {/* Stats row */}
           <div className="grid grid-cols-2 gap-2">
-            <StatCell icon={<ClockIcon size={12} />}     label="安装日期" value={formatDate(skill.installedAt)} />
-            <StatCell icon={<ClockIcon size={12} />}     label="最近使用" value={formatDate(skill.lastUsedAt)} />
-            <StatCell icon={<BarChart2Icon size={12} />} label="使用次数" value={String(skill.usageCount)} />
-            <StatCell icon={<FolderOpenIcon size={12} />} label="工具" value={skill.toolId} />
+            <StatCell icon={<ClockIcon size={15} />}     label="安装日期" value={formatDate(skill.installedAt)} />
+            <StatCell icon={<ClockIcon size={15} />}     label="最近使用" value={formatDate(skill.lastUsedAt)} />
+            <StatCell icon={<BarChart2Icon size={15} />} label="使用次数" value={String(skill.usageCount)} />
+            <StatCell icon={<FolderOpenIcon size={15} />} label="工具" value={skill.toolId} />
           </div>
 
           {/* Categories */}
@@ -224,7 +252,7 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
                       />
                     )
                   })
-                : <span className="text-[11px] text-[var(--color-text-placeholder)]">暂无分类</span>
+                : <span className="text-[14px] text-[var(--color-text-placeholder)]">暂无分类</span>
               }
               <select
                 value=""
@@ -232,7 +260,7 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
                   void handleAddCategory(event.target.value)
                   event.currentTarget.value = ''
                 }}
-                className="h-6 rounded-full border border-dashed border-[var(--color-border)] bg-transparent px-2 text-[10px] text-[var(--color-text-placeholder)] outline-none hover:text-[var(--color-text-secondary)]"
+                className="h-8 rounded-full border border-dashed border-[var(--color-border)] bg-transparent px-3 text-[13px] text-[var(--color-text-placeholder)] outline-none hover:text-[var(--color-text-secondary)]"
               >
                 <option value="">添加分类</option>
                 {categories
@@ -258,17 +286,29 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
             <NoteEditor skillId={skill.id} note={note} onChanged={setNote} />
           </Section>
 
+          <Section label="配置映射">
+            <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
+              <p className="mb-3 text-[14px] leading-relaxed text-[var(--color-text-secondary)]">
+                为当前技能添加 Codex 应用内映射，便于在映射列表中统一管理。
+              </p>
+              <Button size="sm" variant="secondary" onClick={handleAddSkillMapping} disabled={mapping}>
+                {mapping ? <RefreshCwIcon size={15} className="animate-spin" /> : <PlusIcon size={15} />}
+                {mapping ? '添加中' : '添加技能映射'}
+              </Button>
+            </div>
+          </Section>
+
           {/* Install path */}
           <Section label="安装路径">
             <p
-              className="break-all text-[10px] text-[var(--color-text-placeholder)]"
+              className="break-all text-[13px] text-[var(--color-text-placeholder)]"
               style={{ fontFamily: 'var(--font-mono)' }}
             >
               {skill.installPath}
             </p>
           </Section>
           {feedback && (
-            <p className="text-[11px] text-[var(--color-text-secondary)]">{feedback}</p>
+            <p className="text-[14px] text-[var(--color-text-secondary)]">{feedback}</p>
           )}
         </div>
       </ScrollArea>
@@ -283,7 +323,7 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
           onClick={handleUpdate}
           disabled={updating}
         >
-          <RefreshCwIcon size={13} className={updating ? 'animate-spin' : ''} />
+          <RefreshCwIcon size={16} className={updating ? 'animate-spin' : ''} />
           {updating ? '更新中' : '更新'}
         </Button>
         <Button
@@ -292,7 +332,7 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
           className="flex-1 justify-center"
           onClick={handleToggle}
         >
-          <PowerIcon size={13} />
+          <PowerIcon size={16} />
           {skill.enabled ? '禁用' : '启用'}
         </Button>
         <Button
@@ -301,7 +341,7 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
           className="flex-1 justify-center"
           onClick={() => setConfirmUninstall(true)}
         >
-          <Trash2Icon size={13} />
+          <Trash2Icon size={16} />
           卸载
         </Button>
       </div>
@@ -324,7 +364,7 @@ export default function SkillDetailPanel({ skill, onClose }: Props) {
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-placeholder)] mb-2">
+      <p className="mb-2 text-[13px] font-semibold uppercase text-[var(--color-text-placeholder)]">
         {label}
       </p>
       {children}
@@ -335,7 +375,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 function Chip({ label, accent, onRemove }: { label: string; accent?: boolean; onRemove?: () => void }) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium"
+      className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[13px] font-medium"
       style={accent
         ? { background: 'var(--color-accent-muted)', borderColor: 'rgba(99,102,241,0.3)', color: 'var(--color-accent-hover)' }
         : { background: 'var(--color-bg-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }
@@ -348,7 +388,7 @@ function Chip({ label, accent, onRemove }: { label: string; accent?: boolean; on
           className="border-none bg-transparent p-0 text-[var(--color-text-placeholder)] hover:text-[var(--color-danger)]"
           aria-label={`移除 ${label}`}
         >
-          <XIcon size={9} />
+          <XIcon size={12} />
         </button>
       )}
     </span>
@@ -357,12 +397,12 @@ function Chip({ label, accent, onRemove }: { label: string; accent?: boolean; on
 
 function StatCell({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="bg-[var(--color-bg-surface)] border border-[var(--color-border)] rounded-md p-2.5">
+    <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
       <div className="flex items-center gap-1 mb-0.5 text-[var(--color-text-placeholder)]">
         {icon}
-        <span className="text-[10px] uppercase tracking-[0.06em]">{label}</span>
+        <span className="text-[12px] uppercase">{label}</span>
       </div>
-      <span className="text-[12px] font-medium text-[var(--color-text-secondary)]">{value}</span>
+      <span className="text-[14px] font-medium text-[var(--color-text-secondary)]">{value}</span>
     </div>
   )
 }
@@ -404,14 +444,14 @@ function AliasEditor({
             }
           }}
           placeholder="别名..."
-          className="w-20 rounded-full border border-[var(--color-accent)] bg-transparent px-2 py-0.5 text-[11px] text-[var(--color-text-primary)] outline-none"
+          className="w-28 rounded-full border border-[var(--color-accent)] bg-transparent px-3 py-1 text-[13px] text-[var(--color-text-primary)] outline-none"
         />
       ) : (
         <button
           onClick={() => setEditing(true)}
-          className="inline-flex items-center gap-1 rounded-full border border-dashed border-[var(--color-border)] bg-transparent px-2 py-0.5 text-[10px] text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]"
+          className="inline-flex items-center gap-1 rounded-full border border-dashed border-[var(--color-border)] bg-transparent px-2.5 py-1 text-[13px] text-[var(--color-text-placeholder)] hover:text-[var(--color-text-secondary)]"
         >
-          <PlusIcon size={9} /> 别名
+          <PlusIcon size={12} /> 别名
         </button>
       )}
     </div>

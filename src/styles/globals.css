@@ -72,7 +72,7 @@ html, body, #root {
   background: var(--color-bg-base);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   user-select: none;
@@ -81,6 +81,17 @@ html, body, #root {
 
 input, textarea, [contenteditable="true"] {
   user-select: text;
+}
+
+button,
+a,
+[role="button"] {
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    opacity var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
 }
 
 /* ── Animations ── */
@@ -141,7 +152,7 @@ input, textarea, [contenteditable="true"] {
 }
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);

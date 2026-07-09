@@ -2,6 +2,9 @@ pub mod categories;
 pub mod metadata;
 pub mod workspaces;
 pub mod repositories;
+pub mod market;
+pub mod invocations;
+pub mod canonical;
 
 use anyhow::{Context, Result};
 use rusqlite::{params, Connection};
@@ -95,6 +98,24 @@ fn run_migrations(conn: &Connection) -> Result<()> {
         let sql = include_str!("../../migrations/002_search_index.sql");
         conn.execute_batch(sql)?;
         conn.execute("INSERT INTO _migrations VALUES (2)", [])?;
+    }
+
+    if version < 3 {
+        let sql = include_str!("../../migrations/003_market_invocations.sql");
+        conn.execute_batch(sql)?;
+        conn.execute("INSERT INTO _migrations VALUES (3)", [])?;
+    }
+
+    if version < 4 {
+        let sql = include_str!("../../migrations/004_invocation_routes.sql");
+        conn.execute_batch(sql)?;
+        conn.execute("INSERT INTO _migrations VALUES (4)", [])?;
+    }
+
+    if version < 5 {
+        let sql = include_str!("../../migrations/005_canonical_store.sql");
+        conn.execute_batch(sql)?;
+        conn.execute("INSERT INTO _migrations VALUES (5)", [])?;
     }
 
     Ok(())

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { SearchIcon, LayersIcon, LayoutGridIcon, CompassIcon, RefreshCwIcon } from '@/components/icons'
+import { SearchIcon, LayersIcon, LayoutGridIcon, CompassIcon, RefreshCwIcon, TerminalIcon } from '@/components/icons'
 import { useNavigate } from 'react-router-dom'
 import { useSkillStore } from '@/stores/skillStore'
 import { cn } from '@/lib/utils'
@@ -47,6 +47,10 @@ export default function CommandPalette({ open, onClose }: Props) {
     {
       id: 'nav-discover', label: '发现新技能', icon: <CompassIcon size={14} />,
       action: () => { navigate('/discover'); onClose() }, group: '导航',
+    },
+    {
+      id: 'nav-invocations', label: '打开配置映射', icon: <TerminalIcon size={14} />,
+      action: () => { navigate('/invocations'); onClose() }, group: '导航',
     },
     {
       id: 'scan', label: '扫描本地技能', description: '重新扫描并更新已安装技能',

@@ -142,7 +142,11 @@ export default function ReposPage() {
                   setSyncMsg('')
                   try {
                     const result = await syncRepo(r.id)
-                    setSyncMsg(`${r.name}：${result.message}，发现 ${result.scannedSkills} 个技能`)
+                    setSyncMsg(
+                      `${r.name}：${result.message}，索引 ${result.scannedSkills} 个技能` +
+                      `（新增 ${result.added}，更新 ${result.updated}，移除 ${result.removed}）` +
+                      (result.errors.length ? `，${result.errors.length} 个问题` : ''),
+                    )
                   } catch (err) {
                     setSyncMsg(`${r.name}：同步失败：${String(err)}`)
                   } finally {

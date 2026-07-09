@@ -4,6 +4,7 @@ import {
 } from '@/components/icons'
 import { useCategoryStore, type Category } from '@/stores/categoryStore'
 import { useSkillStore } from '@/stores/skillStore'
+import { useInvocationStore } from '@/stores/invocationStore'
 import { cn } from '@/lib/utils'
 
 export default function CategoryTree() {
@@ -13,9 +14,12 @@ export default function CategoryTree() {
   } =
     useCategoryStore()
   const { setFilterCategory } = useSkillStore()
+  const { addConfigMappings } = useInvocationStore()
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
   const [newParentId, setNewParentId] = useState('')
+  const [mapping, setMapping] = useState(false)
+  const [mappingMsg, setMappingMsg] = useState('')
 
   useEffect(() => { fetchCategories() }, [fetchCategories])
 
@@ -30,6 +34,26 @@ export default function CategoryTree() {
     setNewName('')
     setNewParentId('')
     setCreating(false)
+  }
+
+  const handleAddCategoryMapping = async () => {
+    if (!activeCategory || activeCategory === 'all' || activeCategory === 'uncategorized') return
+    setMapping(true)
+    setMappingMsg('')
+    try {
+      const result = await addConfigMappings({
+        targetType: 'category',
+        targetId: activeCategory,
+        toolId: 'codex',
+        scope: 'user',
+        mode: 'auto',
+      })
+      setMappingMsg(`已添加 ${result.mapped} 条分类映射`)
+    } catch (err) {
+      setMappingMsg(`映射失败：${String(err)}`)
+    } finally {
+      setMapping(false)
+    }
   }
 
   const rootCategories = categories.filter((c) => !c.parentId)
@@ -117,6 +141,22 @@ export default function CategoryTree() {
           </button>
         )}
       </div>
+
+      {activeCategory && activeCategory !== 'all' && activeCategory !== 'uncategorized' && (
+        <div className="mt-2 px-2">
+          <button
+            onClick={handleAddCategoryMapping}
+            disabled={mapping}
+            className="flex w-full items-center justify-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-2 py-1.5 text-[11px] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] disabled:opacity-60"
+          >
+            <PlusIcon size={11} />
+            {mapping ? '添加中...' : '添加分类映射'}
+          </button>
+          {mappingMsg && (
+            <p className="mt-1 text-center text-[10px] text-[var(--color-text-placeholder)]">{mappingMsg}</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
