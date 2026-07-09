@@ -1,8 +1,13 @@
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { MinusIcon, SquareIcon, XIcon } from '@/components/icons'
+import { MinusIcon, SearchIcon, SquareIcon, XIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { APP_NAME } from '@/lib/appMeta'
 
-export default function TitleBar() {
+interface TitleBarProps {
+  onCommand?: () => void
+}
+
+export default function TitleBar({ onCommand }: TitleBarProps) {
   const win = getCurrentWindow()
 
   return (
@@ -19,9 +24,22 @@ export default function TitleBar() {
           <line x1="6.5" y1="10.5" x2="11.5" y2="10.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
         <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">
-          SkillHub
+          {APP_NAME}
         </span>
       </div>
+
+      {onCommand && (
+        <button
+          onClick={onCommand}
+          className="pointer-events-auto flex h-7 items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-2.5 text-[11px] text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-text-primary)]"
+        >
+          <SearchIcon size={12} />
+          <span>搜索</span>
+          <kbd className="rounded border border-[var(--color-border)] bg-[var(--color-bg-hover)] px-1 text-[10px] text-[var(--color-text-placeholder)]">
+            ⌘K
+          </kbd>
+        </button>
+      )}
 
       {/* Right: Window controls */}
       <div className="flex items-center gap-0.5" style={{ pointerEvents: 'auto' }}>

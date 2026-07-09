@@ -1,7 +1,6 @@
 use anyhow::Result;
-use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
-use std::fs;
+use std::collections::HashMap;
 
 use crate::db::workspaces::{
     activate_workspace, add_skill_to_workspace, create_workspace, delete_workspace,
@@ -9,6 +8,13 @@ use crate::db::workspaces::{
     Workspace, WorkspaceSkill,
 };
 use crate::commands::skills::DbState;
+use crate::{
+    adapters::{
+        tools::{AgentsAdapter, CcSwitchAdapter, ClaudeCodeAdapter},
+        ToolAdapter,
+    },
+    db,
+};
 use tauri::State;
 
 // ── YAML schema ───────────────────────────────────────────────────────────────
@@ -53,11 +59,11 @@ pub fn create_workspace_cmd(
 
 #[tauri::command]
 pub fn update_workspace_cmd(
-    id: String, name: String, description: Option<String>,
+    id: String, name: String, description: Option<String>, tool_id: Option<String>,
     color: String, icon: String, state: State<'_, DbState>,
 ) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
-    update_workspace(&conn, &id, &name, description.as_deref(), &color, &icon)
+    update_workspace(&conn, &id, &name, description.as_deref(), tool_id.as_deref(), &color, &icon)
         .map_err(|e| e.to_string())
 }
 
@@ -67,10 +73,77 @@ pub fn delete_workspace_cmd(id: String, state: State<'_, DbState>) -> Result<(),
     delete_workspace(&conn, &id).map_err(|e| e.to_string())
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct WorkspaceActivationResult {
+    pub enabled: usize,
+    pub disabled: usize,
+    pub errors: Vec<String>,
+}
+
+fn adapter_for_tool(tool_id: &str) -> Option<Box<dyn ToolAdapter>> {
+    match tool_id {
+        "claude-code" => Some(Box::new(ClaudeCodeAdapter)),
+        "agents" => Some(Box::new(AgentsAdapter)),
+        "cc-switch" => Some(Box::new(CcSwitchAdapter)),
+        _ => None,
+    }
+}
+
 #[tauri::command]
-pub fn activate_workspace_cmd(id: String, state: State<'_, DbState>) -> Result<(), String> {
+pub fn activate_workspace_cmd(
+    id: String,
+    state: State<'_, DbState>,
+) -> Result<WorkspaceActivationResult, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let workspaces = list_workspaces(&conn).map_err(|e| e.to_string())?;
+    let workspace = workspaces
+        .iter()
+        .find(|workspace| workspace.id == id)
+        .ok_or_else(|| "Workspace not found".to_string())?;
+    let workspace_skills = list_workspace_skills(&conn, &id).map_err(|e| e.to_string())?;
+    let workspace_skill_map: HashMap<String, bool> = workspace_skills
+        .iter()
+        .map(|skill| (skill.skill_id.clone(), skill.enabled))
+        .collect();
+    let all_skills = db::list_skills(&conn).map_err(|e| e.to_string())?;
+
+    // 先写入当前工作区，再做文件层差量同步，确保 UI 可以立即反映切换状态。
     activate_workspace(&conn, &id).map_err(|e| e.to_string())
+        ?;
+
+    let mut result = WorkspaceActivationResult { enabled: 0, disabled: 0, errors: vec![] };
+
+    for skill in all_skills {
+        if workspace.tool_id.as_deref().is_some_and(|tool_id| tool_id != skill.tool_id) {
+            continue;
+        }
+
+        let should_enable = workspace_skill_map.get(&skill.id).copied().unwrap_or(false);
+        if should_enable == skill.enabled {
+            continue;
+        }
+
+        let Some(adapter) = adapter_for_tool(&skill.tool_id) else {
+            result.errors.push(format!("未知工具：{}", skill.tool_id));
+            continue;
+        };
+
+        let operation = if should_enable {
+            adapter.enable_skill(&skill.install_path)
+        } else {
+            adapter.disable_skill(&skill.install_path)
+        };
+
+        match operation {
+            Ok(()) => {
+                db::toggle_skill(&conn, &skill.id, should_enable).map_err(|e| e.to_string())?;
+                if should_enable { result.enabled += 1 } else { result.disabled += 1 }
+            }
+            Err(err) => result.errors.push(format!("{} 同步失败：{}", skill.name, err)),
+        }
+    }
+
+    Ok(result)
 }
 
 // ── Workspace skills ──────────────────────────────────────────────────────────
@@ -166,7 +239,8 @@ pub fn import_workspace_yaml(
         ).unwrap_or(0) > 0;
 
         if exists {
-            add_skill_to_workspace(&conn, &ws.id, &skill_yaml.id).ok();
+            add_skill_to_workspace(&conn, &ws.id, &skill_yaml.id)
+                .map_err(|e| format!("Failed to add skill {}: {}", skill_yaml.id, e))?;
             imported += 1;
         } else {
             missing.push(skill_yaml.id.clone());

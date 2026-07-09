@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   SelectRoot, SelectTrigger, SelectValue, SelectContent, SelectItemEl,
 } from '@/components/ui/select'
+import { APP_NAME, APP_VERSION } from '@/lib/appMeta'
 
 interface Settings {
   launchAtStartup: boolean
@@ -113,7 +114,7 @@ export default function SettingsPage() {
 
         {/* General */}
         <Section title="通用">
-          <SettingRow label="开机自启动" description="系统启动时自动打开 SkillHub">
+          <SettingRow label="开机自启动" description={`系统启动时自动打开 ${APP_NAME}`}>
             <Switch
               checked={settings.launchAtStartup}
               onCheckedChange={(v) => setSettings({ ...settings, launchAtStartup: v })}
@@ -183,7 +184,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[13px] font-medium text-[var(--color-text-primary)]">当前版本</p>
-                <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">SkillHub v0.1.0</p>
+                <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">{APP_NAME} v{APP_VERSION}</p>
               </div>
               <UpdateButton status={updateStatus} onCheck={checkUpdate} onInstall={install} />
             </div>
@@ -205,7 +206,7 @@ export default function SettingsPage() {
               🎯
             </div>
             <div>
-              <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">SkillHub</p>
+              <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">{APP_NAME}</p>
               <p className="text-[11px] text-[var(--color-text-secondary)]">
                 AI Skills 管理与安装工具 · © 2026
               </p>

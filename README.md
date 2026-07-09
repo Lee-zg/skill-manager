@@ -1,4 +1,4 @@
-# SkillHub
+# SkillManager
 
 > AI Skills 管理与安装桌面工具 — 统一管理 Claude Code、Agents、cc-switch 等 AI 工具的技能集
 
@@ -30,8 +30,8 @@
 ### 开发模式
 
 ```bash
-git clone https://github.com/Lee-zg/skill-manager.git
-cd skill-manager
+git clone https://github.com/Lee-zg/skillmanager.git
+cd skillmanager
 npm install
 npm run tauri dev
 ```
@@ -46,7 +46,7 @@ npm run tauri build
 ## 📁 项目结构
 
 ```
-skill-manager/
+skillmanager/
 ├── src/
 │   ├── components/    # TitleBar / Sidebar / SkillCard / CommandPalette ...
 │   ├── pages/         # Skills / Workspaces / Discover / Repos / Settings
@@ -92,4 +92,4 @@ skill-manager/
 
 ## 📄 许可证
 
-MIT License — © 2026 SkillHub
+MIT License — © 2026 SkillManager

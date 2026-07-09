@@ -9,12 +9,14 @@ import WorkspacesPage from '@/pages/Workspaces/WorkspacesPage'
 import DiscoverPage from '@/pages/Discover/DiscoverPage'
 import ReposPage from '@/pages/Repos/ReposPage'
 import SettingsPage from '@/pages/Settings/SettingsPage'
-
-const ONBOARDING_KEY = 'skillhub-onboarded'
+import { STORAGE_KEYS, migrateLocalStorageKey } from '@/lib/appMeta'
 
 export default function App() {
   const [onboarded, setOnboarded] = useState(
-    () => localStorage.getItem(ONBOARDING_KEY) === 'true',
+    () => {
+      migrateLocalStorageKey(STORAGE_KEYS.onboarding, STORAGE_KEYS.legacyOnboarding)
+      return localStorage.getItem(STORAGE_KEYS.onboarding) === 'true'
+    },
   )
   const [cmdOpen, setCmdOpen] = useState(false)
 
@@ -31,7 +33,7 @@ export default function App() {
   }, [])
 
   const handleOnboardingComplete = () => {
-    localStorage.setItem(ONBOARDING_KEY, 'true')
+    localStorage.setItem(STORAGE_KEYS.onboarding, 'true')
     setOnboarded(true)
   }
 
@@ -46,7 +48,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-full" style={{ background: 'var(--color-bg-base)' }}>
-      <TitleBar />
+      <TitleBar onCommand={() => setCmdOpen(true)} />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <main className="flex-1 overflow-hidden">

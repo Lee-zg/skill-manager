@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SearchIcon, DownloadIcon, StarIcon, PackageIcon, RefreshCwIcon } from '@/components/icons'
 import { invoke } from '@tauri-apps/api/core'
 import { useSkillStore } from '@/stores/skillStore'
@@ -23,6 +23,14 @@ interface RemoteSkill {
 }
 
 type InstallState = Record<string, 'idle' | 'installing' | 'done' | 'error'>
+const CATEGORY_FILTERS = [
+  { id: 'all', label: '全部' },
+  { id: 'development', label: '开发' },
+  { id: 'design', label: '设计' },
+  { id: 'data', label: '数据' },
+  { id: 'automation', label: '自动化' },
+  { id: 'writing', label: '写作' },
+]
 
 export default function DiscoverPage() {
   const [query, setQuery] = useState('')
@@ -30,8 +38,23 @@ export default function DiscoverPage() {
   const [searching, setSearching] = useState(false)
   const [installState, setInstallState] = useState<InstallState>({})
   const [installTool, setInstallTool] = useState('claude-code')
+  const [category, setCategory] = useState('all')
   const [messages, setMessages] = useState<Record<string, string>>({})
-  const { fetchSkills } = useSkillStore()
+  const { skills, fetchSkills } = useSkillStore()
+
+  useEffect(() => {
+    fetchSkills()
+  }, [fetchSkills])
+
+  const installedNames = useMemo(
+    () => new Set(skills.map((skill) => skill.name.toLowerCase())),
+    [skills],
+  )
+
+  const visibleResults = useMemo(() => {
+    if (category === 'all') return results
+    return results.filter((skill) => skill.tags.some((tag) => tag.toLowerCase().includes(category)))
+  }, [category, results])
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -107,6 +130,23 @@ export default function DiscoverPage() {
 
       {/* Results */}
       <div className="flex-1 overflow-y-auto p-6">
+        <div className="mb-4 flex flex-wrap gap-2">
+          {CATEGORY_FILTERS.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setCategory(item.id)}
+              className={cn(
+                'rounded-full border px-3 py-1 text-[11px] transition-all',
+                category === item.id
+                  ? 'border-[rgba(99,102,241,0.4)] bg-[var(--color-accent-muted)] text-[var(--color-accent-hover)]'
+                  : 'border-[var(--color-border)] bg-[var(--color-bg-panel)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-surface)]',
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
         {results.length === 0 && !searching ? (
           <div className="flex flex-col items-center justify-center h-full gap-2">
             <PackageIcon size={32} className="text-[var(--color-text-placeholder)]" />
@@ -115,8 +155,14 @@ export default function DiscoverPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {results.map((skill) => {
-              const state = installState[skill.id] ?? 'idle'
+            {visibleResults.length === 0 && (
+              <p className="py-8 text-center text-[13px] text-[var(--color-text-placeholder)]">
+                当前分类下没有匹配结果
+              </p>
+            )}
+            {visibleResults.map((skill) => {
+              const installed = installedNames.has(skill.name.toLowerCase())
+              const state = installed ? 'done' : (installState[skill.id] ?? 'idle')
               const msg = messages[skill.id]
               return (
                 <div

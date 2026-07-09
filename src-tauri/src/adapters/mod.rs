@@ -9,6 +9,7 @@ pub struct SkillMeta {
     pub name: String,
     pub original_name: String,
     pub description: Option<String>,
+    pub source: Option<String>,
     pub version: Option<String>,
     pub install_path: String,
     pub tool_id: String,

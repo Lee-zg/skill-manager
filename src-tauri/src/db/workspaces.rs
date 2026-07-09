@@ -64,11 +64,11 @@ pub fn create_workspace(conn: &Connection, name: &str, description: Option<&str>
 }
 
 pub fn update_workspace(conn: &Connection, id: &str, name: &str,
-    description: Option<&str>, color: &str, icon: &str) -> Result<()> {
+    description: Option<&str>, tool_id: Option<&str>, color: &str, icon: &str) -> Result<()> {
     conn.execute(
-        "UPDATE workspaces SET name=?1, description=?2, color=?3, icon=?4,
-         updated_at=strftime('%s','now') WHERE id=?5",
-        params![name, description, color, icon, id],
+        "UPDATE workspaces SET name=?1, description=?2, tool_id=?3, color=?4, icon=?5,
+         updated_at=strftime('%s','now') WHERE id=?6",
+        params![name, description, tool_id, color, icon, id],
     )?;
     Ok(())
 }

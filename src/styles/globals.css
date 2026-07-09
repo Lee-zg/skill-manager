@@ -45,6 +45,9 @@
   /* Color extras (not Tailwind tokens) */
   --color-border-light:  rgba(255, 255, 255, 0.06);
   --color-accent-muted:  rgba(99, 102, 241, 0.15);
+  --shadow-card:      0 2px 10px rgba(0, 0, 0, 0.22);
+  --shadow-card-hover: 0 10px 24px rgba(0, 0, 0, 0.32);
+  --shadow-floating:  0 18px 48px rgba(0, 0, 0, 0.45);
 
   /* Easing */
   --ease-standard:  cubic-bezier(0.4, 0, 0.2, 1);
@@ -76,6 +79,10 @@ html, body, #root {
   overflow: hidden;
 }
 
+input, textarea, [contenteditable="true"] {
+  user-select: text;
+}
+
 /* ── Animations ── */
 @keyframes spin {
   from { transform: rotate(0deg); }
@@ -92,9 +99,23 @@ html, body, #root {
   to   { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes scaleIn {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
 .animate-fade-in  { animation: fadeIn 200ms var(--ease-standard) forwards; }
 .animate-slide-in { animation: slideInRight 200ms var(--ease-standard) forwards; }
+.animate-scale-in { animation: scaleIn 180ms var(--ease-standard) forwards; }
 .animate-spin     { animation: spin 1s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 /* ── Glass Utilities ── */
 .glass-panel {

@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
-import { PlusIcon, Trash2Icon, ExternalLinkIcon, ToggleLeftIcon, ToggleRightIcon } from '@/components/icons'
+import {
+  PlusIcon, Trash2Icon, ExternalLinkIcon, ToggleLeftIcon, ToggleRightIcon, RefreshCwIcon,
+} from '@/components/icons'
 import { useRepoStore } from '@/stores/repoStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import {
   SelectRoot, SelectTrigger, SelectValue, SelectContent, SelectItemEl,
 } from '@/components/ui/select'
@@ -15,13 +18,16 @@ const REPO_TYPES = [
 ]
 
 export default function ReposPage() {
-  const { repos, fetchRepos, addRepo, toggleRepo, deleteRepo } = useRepoStore()
+  const { repos, fetchRepos, addRepo, syncRepo, toggleRepo, deleteRepo } = useRepoStore()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
     name: '', url: '', repoType: 'registry',
     branch: 'main', skillsDir: 'skills/', priority: 10,
   })
   const [saving, setSaving] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [syncingId, setSyncingId] = useState<string | null>(null)
+  const [syncMsg, setSyncMsg] = useState('')
 
   useEffect(() => { fetchRepos() }, [fetchRepos])
 
@@ -129,10 +135,22 @@ export default function ReposPage() {
                 key={r.id}
                 name={r.name} url={r.url} type={r.repoType}
                 enabled={r.enabled}
-                onToggle={(v) => toggleRepo(r.id, v)}
-                onDelete={async () => {
-                  if (confirm(`确认删除仓库 "${r.name}"？`)) await deleteRepo(r.id)
+                lastSync={r.lastSync}
+                syncing={syncingId === r.id}
+                onSync={async () => {
+                  setSyncingId(r.id)
+                  setSyncMsg('')
+                  try {
+                    const result = await syncRepo(r.id)
+                    setSyncMsg(`${r.name}：${result.message}，发现 ${result.scannedSkills} 个技能`)
+                  } catch (err) {
+                    setSyncMsg(`${r.name}：同步失败：${String(err)}`)
+                  } finally {
+                    setSyncingId(null)
+                  }
                 }}
+                onToggle={(v) => toggleRepo(r.id, v)}
+                onDelete={() => setDeleteTarget({ id: r.id, name: r.name })}
               />
             ))}
           </>
@@ -143,14 +161,34 @@ export default function ReposPage() {
             暂无自定义仓库，点击「添加仓库」配置私有技能库
           </p>
         )}
+        {syncMsg && (
+          <p className="text-center text-[12px] text-[var(--color-text-secondary)]">{syncMsg}</p>
+        )}
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="删除仓库"
+        description={`确认删除仓库 "${deleteTarget?.name ?? ''}"？已安装的技能不会被删除。`}
+        confirmText="删除"
+        danger
+        onConfirm={async () => {
+          if (deleteTarget) await deleteRepo(deleteTarget.id)
+        }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      />
     </div>
   )
 }
 
-function RepoRow({ name, url, type, enabled, builtin, onToggle, onDelete }: {
+function RepoRow({
+  name, url, type, enabled, builtin, lastSync, syncing, onSync, onToggle, onDelete,
+}: {
   name: string; url: string; type: string
-  enabled: boolean; builtin?: boolean
+  enabled: boolean; builtin?: boolean; lastSync?: number; syncing?: boolean
+  onSync?: () => void | Promise<void>
   onToggle: (v: boolean) => void; onDelete: () => void
 }) {
   return (
@@ -162,10 +200,23 @@ function RepoRow({ name, url, type, enabled, builtin, onToggle, onDelete }: {
           {builtin && <span className="text-[10px] text-[var(--color-accent)]">内置</span>}
         </div>
         <p className="truncate text-[11px] text-[var(--color-text-placeholder)] mt-0.5">{url}</p>
+        {lastSync && (
+          <p className="text-[10px] text-[var(--color-text-placeholder)] mt-0.5">
+            上次同步：{new Date(lastSync * 1000).toLocaleString('zh-CN')}
+          </p>
+        )}
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {!builtin && (
           <>
+            <button
+              onClick={onSync}
+              disabled={syncing}
+              className="bg-none border-none cursor-pointer text-[var(--color-text-placeholder)] transition-colors hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="同步仓库"
+            >
+              <RefreshCwIcon size={14} className={syncing ? 'animate-spin' : ''} />
+            </button>
             <button
               onClick={() => onToggle(!enabled)}
               className="bg-none border-none cursor-pointer transition-colors"

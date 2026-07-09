@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { PlusIcon, UploadIcon } from '@/components/icons'
 import { useWorkspaceStore, type Workspace } from '@/stores/workspaceStore'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import WorkspaceCard from '@/components/WorkspaceCard/WorkspaceCard'
 import WorkspaceForm from '@/components/WorkspaceForm/WorkspaceForm'
 
@@ -15,6 +16,7 @@ export default function WorkspacesPage() {
   const [editTarget, setEditTarget] = useState<Workspace | null>(null)
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<Workspace | null>(null)
 
   useEffect(() => { fetchWorkspaces() }, [fetchWorkspaces])
 
@@ -98,9 +100,7 @@ export default function WorkspacesPage() {
                 workspace={ws}
                 onActivate={() => activateWorkspace(ws.id)}
                 onEdit={() => { setEditTarget(ws); setShowForm(true) }}
-                onDelete={async () => {
-                  if (confirm(`确认删除工作区 "${ws.name}"？`)) await deleteWorkspace(ws.id)
-                }}
+                onDelete={() => setDeleteTarget(ws)}
                 onExport={() => handleExport(ws)}
               />
             ))}
@@ -112,12 +112,29 @@ export default function WorkspacesPage() {
         <WorkspaceForm
           initial={editTarget ?? undefined}
           onSave={async (data) => {
-            if (editTarget) await updateWorkspace(editTarget.id, data)
-            else await createWorkspace(data)
+            if (editTarget) {
+              await updateWorkspace(editTarget.id, data)
+              return editTarget
+            }
+            return createWorkspace(data)
           }}
           onClose={() => { setShowForm(false); setEditTarget(null) }}
         />
       )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="删除工作区"
+        description={`确认删除工作区 "${deleteTarget?.name ?? ''}"？工作区配置会被移除，但不会删除技能文件。`}
+        confirmText="删除"
+        danger
+        onConfirm={async () => {
+          if (deleteTarget) await deleteWorkspace(deleteTarget.id)
+        }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      />
     </div>
   )
 }

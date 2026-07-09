@@ -9,6 +9,7 @@ function makeSkill(overrides: Partial<Skill> = {}): Skill {
     name: 'my-skill',
     originalName: 'my-skill',
     description: 'A handy skill',
+    source: undefined,
     version: '1.0.0',
     installPath: '/path/to/skill',
     toolId: 'claude-code',
@@ -18,7 +19,11 @@ function makeSkill(overrides: Partial<Skill> = {}): Skill {
     usageCount: 0,
     tags: ['ai', 'code'],
     categories: ['dev'],
+    categoryIds: ['dev'],
+    aliases: [],
     note: undefined,
+    highlight: undefined,
+    updateAvailable: false,
     ...overrides,
   }
 }

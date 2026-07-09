@@ -10,6 +10,7 @@ export function mapSkill(s: Record<string, any>): Skill {
     name:         s.name,
     originalName: s.original_name,
     description:  s.description,
+    source:       s.source,
     version:      s.version,
     installPath:  s.install_path,
     toolId:       s.tool_id,
@@ -19,6 +20,10 @@ export function mapSkill(s: Record<string, any>): Skill {
     usageCount:   s.usage_count ?? 0,
     tags:         s.tags         ?? [],
     categories:   s.categories   ?? [],
+    categoryIds:  s.category_ids ?? [],
+    aliases:      s.aliases      ?? [],
     note:         s.note,
+    highlight:    s.highlight,
+    updateAvailable: Boolean(s.update_available),
   }
 }

@@ -20,6 +20,7 @@ interface RepoState {
     name: string; url: string; repoType: string
     branch: string; skillsDir: string; priority: number
   }) => Promise<void>
+  syncRepo: (id: string) => Promise<{ scannedSkills: number; message: string }>
   toggleRepo: (id: string, enabled: boolean) => Promise<void>
   deleteRepo: (id: string) => Promise<void>
 }
@@ -43,6 +44,14 @@ export const useRepoStore = create<RepoState>((set, get) => ({
       branch: data.branch, skillsDir: data.skillsDir, priority: data.priority,
     })
     await get().fetchRepos()
+  },
+  syncRepo: async (id) => {
+    const raw = await invoke<any>('sync_repository_cmd', { id })
+    await get().fetchRepos()
+    return {
+      scannedSkills: raw.scanned_skills ?? 0,
+      message: raw.message ?? '同步完成',
+    }
   },
   toggleRepo: async (id, enabled) => {
     await invoke('toggle_repository_cmd', { id, enabled })

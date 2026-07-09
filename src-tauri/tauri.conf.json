@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "SkillHub",
+  "productName": "SkillManager",
   "version": "0.1.0",
-  "identifier": "com.skillhub.app",
+  "identifier": "com.skillmanager.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "SkillHub",
+        "title": "SkillManager",
         "width": 1100,
         "height": 720,
         "minWidth": 800,
@@ -27,7 +27,7 @@
       "id": "main",
       "iconPath": "icons/32x32.png",
       "iconAsTemplate": true,
-      "tooltip": "SkillHub"
+      "tooltip": "SkillManager"
     },
     "security": {
       "csp": null
@@ -63,19 +63,19 @@
       "appimage": { "bundleMediaFramework": true }
     },
     "resources": [],
-    "copyright": "© 2026 SkillHub",
+    "copyright": "© 2026 SkillManager",
     "category": "DeveloperTool",
     "shortDescription": "AI Skills Management Tool",
-    "longDescription": "SkillHub - A desktop tool for managing, discovering and installing AI coding skills across Claude Code, Agents and other tools."
+    "longDescription": "SkillManager - A desktop tool for managing, discovering and installing AI coding skills across Claude Code, Agents and other tools."
   },
   "plugins": {
     "sql": {
-      "preloadConnections": ["sqlite:skillhub.db"]
+      "preloadConnections": ["sqlite:skillmanager.db"]
     },
     "updater": {
       "pubkey": "REPLACE_WITH_YOUR_PUBLIC_KEY_FROM_tauri_signer_generate",
       "endpoints": [
-        "https://github.com/YOUR_USERNAME/skill-manager/releases/latest/download/latest.json"
+        "https://github.com/YOUR_USERNAME/skillmanager/releases/latest/download/latest.json"
       ],
       "dialog": false,
       "windows": {

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { LayersIcon, RefreshCwIcon, CheckCircleIcon } from '@/components/icons'
 import { useSkillStore, type ScanResult } from '@/stores/skillStore'
 import { Button } from '@/components/ui/button'
+import { APP_NAME } from '@/lib/appMeta'
 
 interface Props {
   onComplete: () => void
@@ -41,10 +42,10 @@ export default function OnboardingScreen({ onComplete }: Props) {
         <>
           <div className="text-center">
             <h1 className="text-[22px] font-bold text-[var(--color-text-primary)] mb-2">
-              欢迎使用 SkillHub
+              欢迎使用 {APP_NAME}
             </h1>
             <p className="text-[13px] text-[var(--color-text-secondary)] max-w-[360px] leading-[1.7]">
-              SkillHub 将扫描您本地安装的 Claude Code、Agents 和 cc-switch 技能，统一管理。
+              {APP_NAME} 将扫描您本地安装的 Claude Code、Agents 和 cc-switch 技能，统一管理。
             </p>
           </div>
           <Button onClick={handleScan} size="lg" className="px-7">
@@ -94,7 +95,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
             </div>
           </div>
           <Button onClick={onComplete} size="lg" className="px-7">
-            进入 SkillHub →
+            进入 {APP_NAME} →
           </Button>
         </>
       )}

@@ -7,6 +7,7 @@ export interface Skill {
   name: string
   originalName: string
   description?: string
+  source?: string
   version?: string
   installPath: string
   toolId: string
@@ -16,12 +17,17 @@ export interface Skill {
   usageCount: number
   tags: string[]
   categories: string[]
+  categoryIds: string[]
+  aliases: string[]
   note?: string
+  highlight?: string
+  updateAvailable: boolean
 }
 
 export interface ScanResult {
   total: number
   byTool: { toolId: string; toolName: string; available: boolean; count: number }[]
+  errors: string[]
 }
 
 interface SkillState {
@@ -40,6 +46,7 @@ interface SkillState {
   setFilterTool: (t: string | null) => void
   setFilterCategory: (c: string | null) => void
   fetchSkills: () => Promise<void>
+  searchSkills: (query: string) => Promise<void>
   scanSkills: () => Promise<ScanResult>
   toggleSkill: (id: string, installPath: string, toolId: string, enabled: boolean) => Promise<void>
   uninstallSkill: (id: string, installPath: string, toolId: string) => Promise<void>
@@ -66,7 +73,17 @@ export const useSkillStore = create<SkillState>((set, get) => ({
     set({ loading: true })
     try {
       const raw = await invoke<Skill[]>('list_skills')
-      // camelCase conversion from snake_case
+      const skills = raw.map(mapSkill)
+      set({ skills })
+    } finally {
+      set({ loading: false })
+    }
+  },
+
+  searchSkills: async (query) => {
+    set({ loading: true })
+    try {
+      const raw = await invoke<Skill[]>('search_skills', { query })
       const skills = raw.map(mapSkill)
       set({ skills })
     } finally {
@@ -87,6 +104,7 @@ export const useSkillStore = create<SkillState>((set, get) => ({
           available: t.available,
           count:     t.count,
         })),
+        errors: raw.errors ?? [],
       }
       await get().fetchSkills()
       return result
@@ -99,6 +117,9 @@ export const useSkillStore = create<SkillState>((set, get) => ({
     await invoke('toggle_skill', { id, installPath, toolId, enabled })
     set((state) => ({
       skills: state.skills.map((s) => (s.id === id ? { ...s, enabled } : s)),
+      selectedSkill: state.selectedSkill?.id === id
+        ? { ...state.selectedSkill, enabled }
+        : state.selectedSkill,
     }))
   },
 

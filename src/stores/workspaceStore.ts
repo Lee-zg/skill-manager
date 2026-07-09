@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { invoke } from '@tauri-apps/api/core'
+import { STORAGE_KEYS, migrateLocalStorageKey } from '@/lib/appMeta'
 
 export interface Workspace {
   id: string
@@ -39,7 +40,7 @@ interface WorkspaceState {
     color: string; icon: string
   }) => Promise<Workspace>
   updateWorkspace: (id: string, data: {
-    name: string; description?: string; color: string; icon: string
+    name: string; description?: string; toolId?: string; color: string; icon: string
   }) => Promise<void>
   deleteWorkspace: (id: string) => Promise<void>
   activateWorkspace: (id: string) => Promise<void>
@@ -60,6 +61,10 @@ const mapWorkspace = (w: any): Workspace => ({
   isActive: w.is_active,
   skillCount: w.skill_count,
 })
+
+if (typeof localStorage !== 'undefined') {
+  migrateLocalStorageKey(STORAGE_KEYS.workspace, STORAGE_KEYS.legacyWorkspace)
+}
 
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
@@ -91,6 +96,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         await invoke('update_workspace_cmd', {
           id, name: data.name,
           description: data.description ?? null,
+          toolId: data.toolId ?? null,
           color: data.color, icon: data.icon,
         })
         await get().fetchWorkspaces()
@@ -144,6 +150,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }
       },
     }),
-    { name: 'skillhub-workspace', partialize: (s) => ({ activeWorkspace: s.activeWorkspace }) },
+    {
+      name: STORAGE_KEYS.workspace,
+      partialize: (s) => ({ activeWorkspace: s.activeWorkspace }),
+      onRehydrateStorage: () => {
+        migrateLocalStorageKey(STORAGE_KEYS.workspace, STORAGE_KEYS.legacyWorkspace)
+      },
+    },
   ),
 )

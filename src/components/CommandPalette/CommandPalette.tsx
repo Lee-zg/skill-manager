@@ -27,9 +27,11 @@ export default function CommandPalette({ open, onClose }: Props) {
 
   useEffect(() => {
     if (open) {
-      setQuery('')
-      setSelected(0)
-      setTimeout(() => inputRef.current?.focus(), 50)
+      queueMicrotask(() => {
+        setQuery('')
+        setSelected(0)
+        inputRef.current?.focus()
+      })
     }
   }, [open])
 
@@ -97,7 +99,9 @@ export default function CommandPalette({ open, onClose }: Props) {
 
   const flat = Object.values(grouped).flat()
 
-  useEffect(() => { setSelected(0) }, [query])
+  useEffect(() => {
+    queueMicrotask(() => setSelected(0))
+  }, [query])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); setSelected((s) => Math.min(s + 1, flat.length - 1)) }

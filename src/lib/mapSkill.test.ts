@@ -8,6 +8,7 @@ describe('mapSkill', () => {
       name:         'my-skill',
       original_name: 'MY-SKILL',
       description:  'does stuff',
+      source:       'repo/source',
       version:      '2.1.0',
       install_path: '/home/user/.claude/skills/my-skill',
       tool_id:      'claude-code',
@@ -17,7 +18,11 @@ describe('mapSkill', () => {
       usage_count:  42,
       tags:         ['tag1', 'tag2'],
       categories:   ['code'],
+      category_ids: ['cat-code'],
+      aliases:      ['ms'],
       note:         'some note',
+      highlight:    '<mark>my</mark>-skill',
+      update_available: true,
     }
 
     const skill = mapSkill(raw)
@@ -32,6 +37,11 @@ describe('mapSkill', () => {
     expect(skill.usageCount).toBe(42)
     expect(skill.tags).toEqual(['tag1', 'tag2'])
     expect(skill.categories).toEqual(['code'])
+    expect(skill.categoryIds).toEqual(['cat-code'])
+    expect(skill.aliases).toEqual(['ms'])
+    expect(skill.source).toBe('repo/source')
+    expect(skill.highlight).toBe('<mark>my</mark>-skill')
+    expect(skill.updateAvailable).toBe(true)
     expect(skill.note).toBe('some note')
   })
 
@@ -40,6 +50,8 @@ describe('mapSkill', () => {
     const skill = mapSkill(raw)
     expect(skill.tags).toEqual([])
     expect(skill.categories).toEqual([])
+    expect(skill.categoryIds).toEqual([])
+    expect(skill.aliases).toEqual([])
   })
 
   it('defaults missing usage_count to 0', () => {

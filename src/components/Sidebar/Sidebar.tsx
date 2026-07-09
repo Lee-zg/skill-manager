@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import {
   LayersIcon, LayoutGridIcon, CompassIcon, PackageIcon, SettingsIcon,
 } from '@/components/icons'
@@ -16,8 +17,12 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const location = useLocation()
-  const { activeWorkspace } = useWorkspaceStore()
+  const { activeWorkspace, fetchWorkspaces } = useWorkspaceStore()
   const isSkillsPage = location.pathname.startsWith('/skills')
+
+  useEffect(() => {
+    fetchWorkspaces()
+  }, [fetchWorkspaces])
 
   return (
     <aside
@@ -79,7 +84,10 @@ export default function Sidebar() {
 
       {/* Active workspace bubble */}
       {activeWorkspace && (
-        <div className="m-2 p-2.5 rounded-md bg-[var(--color-bg-surface)] border border-[var(--color-border)]">
+        <NavLink
+          to="/workspaces"
+          className="m-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-2.5 no-underline transition-all duration-150 hover:border-[var(--color-accent)] hover:bg-[var(--color-bg-hover)]"
+        >
           <div className="flex items-center gap-1.5 mb-0.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)]" />
             <span className="text-[11px] font-medium text-[var(--color-text-primary)]">
@@ -89,7 +97,7 @@ export default function Sidebar() {
           <p className="text-[11px] text-[var(--color-text-placeholder)] m-0">
             {activeWorkspace.skillCount ?? 0} 个技能
           </p>
-        </div>
+        </NavLink>
       )}
     </aside>
   )

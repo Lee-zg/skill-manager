@@ -1,4 +1,4 @@
--- SkillHub SQLite Schema v1
+-- SkillManager SQLite Schema v1
 -- Migration: 001_initial
 
 CREATE TABLE IF NOT EXISTS skills (

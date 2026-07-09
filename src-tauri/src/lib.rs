@@ -1,3 +1,4 @@
+mod app_meta;
 mod adapters;
 mod commands;
 mod db;
@@ -23,13 +24,14 @@ use commands::workspaces::{
 };
 use commands::repositories::{
     list_repositories_cmd, add_repository_cmd, toggle_repository_cmd, delete_repository_cmd,
-    search_registry_cmd, install_skill_cmd, update_skill_cmd, check_updates_cmd,
+    sync_repository_cmd, search_registry_cmd, install_skill_cmd, update_skill_cmd, check_updates_cmd,
 };
 use commands::settings::{
     get_settings, update_settings, get_tool_paths, get_app_stats,
     AppSettings, SettingsState,
 };
 use std::sync::Mutex;
+use app_meta::APP_NAME;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
@@ -62,7 +64,7 @@ pub fn run() {
             let menu = Menu::with_items(app, &[&toggle, &quit])?;
 
             let _tray = TrayIconBuilder::with_id("main")
-                .tooltip("SkillHub")
+                .tooltip(APP_NAME)
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
@@ -116,6 +118,7 @@ pub fn run() {
             add_repository_cmd,
             toggle_repository_cmd,
             delete_repository_cmd,
+            sync_repository_cmd,
             search_registry_cmd,
             install_skill_cmd,
             update_skill_cmd,

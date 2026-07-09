@@ -1,12 +1,12 @@
 [package]
-name = "skill-manager"
+name = "skillmanager"
 version = "0.1.0"
-description = "SkillHub - AI Skills Management Desktop App"
+description = "SkillManager - AI Skills Management Desktop App"
 authors = ["Lee-zg"]
 edition = "2021"
 
 [lib]
-name = "skill_manager_lib"
+name = "skillmanager_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

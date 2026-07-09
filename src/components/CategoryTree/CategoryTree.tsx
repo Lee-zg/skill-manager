@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react'
 import {
-  PlusIcon, ChevronRightIcon, FolderIcon, LayersIcon, Trash2Icon,
+  PlusIcon, ChevronRightIcon, FolderIcon, LayersIcon, Trash2Icon, PencilIcon, CheckIcon,
 } from '@/components/icons'
 import { useCategoryStore, type Category } from '@/stores/categoryStore'
 import { useSkillStore } from '@/stores/skillStore'
 import { cn } from '@/lib/utils'
 
 export default function CategoryTree() {
-  const { categories, activeCategory, setActiveCategory, fetchCategories, createCategory, deleteCategory } =
+  const {
+    categories, activeCategory, setActiveCategory, fetchCategories,
+    createCategory, updateCategory, deleteCategory,
+  } =
     useCategoryStore()
   const { setFilterCategory } = useSkillStore()
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
+  const [newParentId, setNewParentId] = useState('')
 
   useEffect(() => { fetchCategories() }, [fetchCategories])
 
@@ -22,8 +26,9 @@ export default function CategoryTree() {
 
   const handleCreate = async () => {
     if (!newName.trim()) return
-    await createCategory(newName.trim(), '#6366f1', '📁')
+    await createCategory(newName.trim(), '#6366f1', '📁', newParentId || undefined)
     setNewName('')
+    setNewParentId('')
     setCreating(false)
   }
 
@@ -48,9 +53,15 @@ export default function CategoryTree() {
             active={activeCategory === cat.id}
             onSelect={() => handleSelect(cat.id)}
             onDelete={() => deleteCategory(cat.id)}
+            onUpdate={(name) => updateCategory(cat.id, name, cat.color, cat.icon)}
             subCategories={categories.filter((c) => c.parentId === cat.id)}
             activeSubId={activeCategory}
             onSelectSub={(id) => handleSelect(id)}
+            onUpdateSub={(id, name) => {
+              const subCategory = categories.find((item) => item.id === id)
+              if (subCategory) return updateCategory(id, name, subCategory.color, subCategory.icon)
+              return Promise.resolve()
+            }}
           />
         ))}
 
@@ -71,18 +82,32 @@ export default function CategoryTree() {
       {/* Add category */}
       <div className="mt-1 px-2">
         {creating ? (
-          <input
-            autoFocus
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleCreate()
-              if (e.key === 'Escape') setCreating(false)
-            }}
-            onBlur={() => { if (!newName.trim()) setCreating(false) }}
-            placeholder="分类名称..."
-            className="w-full rounded bg-[var(--color-bg-surface)] border border-[var(--color-accent)] text-[var(--color-text-primary)] text-[12px] px-1.5 py-1 outline-none"
-          />
+          <div className="flex flex-col gap-1">
+            <input
+              autoFocus
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCreate()
+                if (e.key === 'Escape') setCreating(false)
+              }}
+              onBlur={() => { if (!newName.trim()) setCreating(false) }}
+              placeholder="分类名称..."
+              className="w-full rounded bg-[var(--color-bg-surface)] border border-[var(--color-accent)] text-[var(--color-text-primary)] text-[12px] px-1.5 py-1 outline-none"
+            />
+            <select
+              value={newParentId}
+              onChange={(event) => setNewParentId(event.target.value)}
+              className="w-full rounded border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-1.5 py-1 text-[11px] text-[var(--color-text-secondary)] outline-none"
+            >
+              <option value="">顶层分类</option>
+              {categories
+                .filter((category) => !category.isSystem && !category.parentId)
+                .map((category) => (
+                  <option key={category.id} value={category.id}>{category.name}</option>
+                ))}
+            </select>
+          </div>
         ) : (
           <button
             onClick={() => setCreating(true)}
@@ -128,13 +153,23 @@ function NavItem({
 }
 
 function CategoryRow({
-  cat, active, onSelect, onDelete, subCategories, activeSubId, onSelectSub,
+  cat, active, onSelect, onDelete, onUpdate, subCategories, activeSubId, onSelectSub, onUpdateSub,
 }: {
   cat: Category; active: boolean; onSelect: () => void; onDelete: () => void
+  onUpdate: (name: string) => Promise<void>
   subCategories: Category[]; activeSubId: string | null; onSelectSub: (id: string) => void
+  onUpdateSub: (id: string, name: string) => Promise<void>
 }) {
   const [expanded, setExpanded] = useState(false)
   const [hovered, setHovered] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(cat.name)
+
+  const commit = async () => {
+    const nextName = draft.trim()
+    if (nextName && nextName !== cat.name) await onUpdate(nextName)
+    setEditing(false)
+  }
 
   return (
     <div>
@@ -158,45 +193,119 @@ function CategoryRow({
           <div style={{ width: 14 }} />
         )}
 
-        <button
-          onClick={onSelect}
-          className="flex items-center gap-1.5 flex-1 py-1.5 bg-none border-none cursor-pointer text-left text-[12px]"
-          style={{
-            color: active ? 'var(--color-accent-hover)' : 'var(--color-text-secondary)',
-            fontWeight: active ? 500 : 400,
-          }}
-        >
-          <span style={{ color: cat.color, fontSize: 13 }}>{cat.icon}</span>
-          <span className="flex-1 truncate">{cat.name}</span>
-          <span className="text-[10px] text-[var(--color-text-placeholder)]">{cat.skillCount}</span>
-        </button>
+        {editing ? (
+          <div className="flex flex-1 items-center gap-1 py-1">
+            <input
+              autoFocus
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') void commit()
+                if (event.key === 'Escape') setEditing(false)
+              }}
+              className="min-w-0 flex-1 rounded border border-[var(--color-accent)] bg-[var(--color-bg-surface)] px-1 py-0.5 text-[11px] text-[var(--color-text-primary)] outline-none"
+            />
+            <button onClick={commit} className="border-none bg-transparent p-0 text-[var(--color-accent)]">
+              <CheckIcon size={10} />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={onSelect}
+            className="flex items-center gap-1.5 flex-1 py-1.5 bg-none border-none cursor-pointer text-left text-[12px]"
+            style={{
+              color: active ? 'var(--color-accent-hover)' : 'var(--color-text-secondary)',
+              fontWeight: active ? 500 : 400,
+            }}
+          >
+            <span style={{ color: cat.color, fontSize: 13 }}>{cat.icon}</span>
+            <span className="flex-1 truncate">{cat.name}</span>
+            <span className="text-[10px] text-[var(--color-text-placeholder)]">{cat.skillCount}</span>
+          </button>
+        )}
 
         {hovered && !cat.isSystem && (
-          <button
-            onClick={onDelete}
-            className="bg-none border-none px-1 py-0.5 cursor-pointer text-[var(--color-danger)] opacity-70 hover:opacity-100"
-          >
-            <Trash2Icon size={10} />
-          </button>
+          <>
+            <button
+              onClick={() => setEditing(true)}
+              className="bg-none border-none px-1 py-0.5 cursor-pointer text-[var(--color-text-placeholder)] opacity-70 hover:opacity-100"
+            >
+              <PencilIcon size={10} />
+            </button>
+            <button
+              onClick={onDelete}
+              className="bg-none border-none px-1 py-0.5 cursor-pointer text-[var(--color-danger)] opacity-70 hover:opacity-100"
+            >
+              <Trash2Icon size={10} />
+            </button>
+          </>
         )}
       </div>
 
       {expanded &&
         subCategories.map((sub) => (
-          <button
+          <SubCategoryRow
             key={sub.id}
-            onClick={() => onSelectSub(sub.id)}
-            className={cn(
-              'flex items-center gap-1.5 w-full pl-8 pr-3 py-1.5 border-none cursor-pointer text-[11px]',
-              activeSubId === sub.id
-                ? 'bg-[var(--color-accent-muted)] text-[var(--color-accent-hover)]'
-                : 'bg-transparent text-[var(--color-text-secondary)]',
-            )}
-          >
-            <span style={{ color: sub.color }}>{sub.icon}</span>
-            <span className="flex-1 truncate">{sub.name}</span>
-          </button>
+            sub={sub}
+            active={activeSubId === sub.id}
+            onSelect={() => onSelectSub(sub.id)}
+            onUpdate={(name) => onUpdateSub(sub.id, name)}
+          />
         ))}
     </div>
+  )
+}
+
+function SubCategoryRow({
+  sub, active, onSelect, onUpdate,
+}: {
+  sub: Category
+  active: boolean
+  onSelect: () => void
+  onUpdate: (name: string) => Promise<void>
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(sub.name)
+
+  const commit = async () => {
+    const nextName = draft.trim()
+    if (nextName && nextName !== sub.name) await onUpdate(nextName)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1 pl-8 pr-3 py-1.5">
+        <input
+          autoFocus
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') void commit()
+            if (event.key === 'Escape') setEditing(false)
+          }}
+          className="min-w-0 flex-1 rounded border border-[var(--color-accent)] bg-[var(--color-bg-surface)] px-1 py-0.5 text-[11px] text-[var(--color-text-primary)] outline-none"
+        />
+        <button onClick={commit} className="border-none bg-transparent p-0 text-[var(--color-accent)]">
+          <CheckIcon size={10} />
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      onClick={onSelect}
+      onDoubleClick={() => setEditing(true)}
+      className={cn(
+        'flex items-center gap-1.5 w-full pl-8 pr-3 py-1.5 border-none cursor-pointer text-[11px]',
+        active
+          ? 'bg-[var(--color-accent-muted)] text-[var(--color-accent-hover)]'
+          : 'bg-transparent text-[var(--color-text-secondary)]',
+      )}
+    >
+      <span style={{ color: sub.color }}>{sub.icon}</span>
+      <span className="flex-1 truncate text-left">{sub.name}</span>
+    </button>
   )
 }

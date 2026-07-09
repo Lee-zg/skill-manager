@@ -10,6 +10,7 @@ function makeSkill(overrides: Partial<Skill> = {}): Skill {
     name: 'test-skill',
     originalName: 'test-skill',
     description: 'A test skill',
+    source: undefined,
     version: '1.0.0',
     installPath: '/some/path',
     toolId: 'claude-code',
@@ -19,15 +20,19 @@ function makeSkill(overrides: Partial<Skill> = {}): Skill {
     usageCount: 0,
     tags: [],
     categories: [],
+    categoryIds: [],
+    aliases: [],
     note: undefined,
+    highlight: undefined,
+    updateAvailable: false,
     ...overrides,
   }
 }
 
 const BASE_SKILLS: Skill[] = [
-  makeSkill({ id: '1', name: 'linter',     toolId: 'claude-code', tags: ['dev'], categories: ['code'] }),
+  makeSkill({ id: '1', name: 'linter',     toolId: 'claude-code', tags: ['dev'], categories: ['code'], categoryIds: ['cat-code'] }),
   makeSkill({ id: '2', name: 'formatter',  toolId: 'claude-code', description: 'auto format code' }),
-  makeSkill({ id: '3', name: 'searcher',   toolId: 'agents',      tags: ['search'], categories: ['util'] }),
+  makeSkill({ id: '3', name: 'searcher',   toolId: 'agents',      tags: ['search'], categories: ['util'], aliases: ['finder'] }),
   makeSkill({ id: '4', name: 'scheduler',  toolId: 'cc-switch',   note: 'runs nightly' }),
 ]
 
@@ -50,7 +55,7 @@ describe('filterSkills', () => {
 
   it('filters by category', () => {
     const result = filterSkills(BASE_SKILLS, {
-      searchQuery: '', filterTool: null, filterCategory: 'code',
+      searchQuery: '', filterTool: null, filterCategory: 'cat-code',
     })
     expect(result.map((s) => s.id)).toEqual(['1'])
   })
@@ -81,6 +86,13 @@ describe('filterSkills', () => {
       searchQuery: 'nightly', filterTool: null, filterCategory: null,
     })
     expect(result.map((s) => s.id)).toEqual(['4'])
+  })
+
+  it('filters by search query on alias', () => {
+    const result = filterSkills(BASE_SKILLS, {
+      searchQuery: 'finder', filterTool: null, filterCategory: null,
+    })
+    expect(result.map((s) => s.id)).toEqual(['3'])
   })
 
   it('combines tool + search filters', () => {

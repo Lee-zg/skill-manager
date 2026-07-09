@@ -40,6 +40,12 @@ pub fn list_categories(conn: &Connection) -> Result<Vec<Category>> {
 }
 
 pub fn create_category(conn: &Connection, name: &str, color: &str, icon: &str, parent_id: Option<&str>) -> Result<Category> {
+    if let Some(parent_id) = parent_id {
+        let depth = category_depth(conn, parent_id)?;
+        if depth >= 3 {
+            anyhow::bail!("分类最多支持 3 层");
+        }
+    }
     let id = Uuid::new_v4().to_string();
     conn.execute(
         "INSERT INTO categories (id, name, color, icon, parent_id, sort_order)
@@ -49,6 +55,29 @@ pub fn create_category(conn: &Connection, name: &str, color: &str, icon: &str, p
     )?;
     Ok(Category { id, name: name.to_string(), parent_id: parent_id.map(String::from),
         color: color.to_string(), icon: icon.to_string(), sort_order: 0, is_system: false, skill_count: 0 })
+}
+
+fn category_depth(conn: &Connection, category_id: &str) -> Result<i64> {
+    let mut depth = 1;
+    let mut current_id = Some(category_id.to_string());
+
+    // 沿父级向上计算深度，超过 3 层直接停止，避免异常环形数据造成长循环。
+    while let Some(id) = current_id {
+        let parent_id: Option<String> = conn.query_row(
+            "SELECT parent_id FROM categories WHERE id=?1",
+            params![id],
+            |row| row.get(0),
+        )?;
+        if parent_id.is_some() {
+            depth += 1;
+        }
+        if depth > 3 {
+            break;
+        }
+        current_id = parent_id;
+    }
+
+    Ok(depth)
 }
 
 pub fn update_category(conn: &Connection, id: &str, name: &str, color: &str, icon: &str) -> Result<()> {

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSkillStore } from '@/stores/skillStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { filterSkills } from '@/lib/filterSkills'
 import SkillCard from '@/components/SkillCard/SkillCard'
 import SkillDetailPanel from '@/components/SkillDetailPanel/SkillDetailPanel'
@@ -17,25 +18,72 @@ export default function SkillsPage() {
     filterTool,
     filterCategory,
     fetchSkills,
+    searchSkills,
     scanSkills,
   } = useSkillStore()
+  const { activeWorkspace, listWorkspaceSkills } = useWorkspaceStore()
 
   const [scanning, setScanning] = useState(false)
+  const [workspaceSkillIds, setWorkspaceSkillIds] = useState<Set<string> | null>(null)
+  const [scanMessage, setScanMessage] = useState('')
 
   useEffect(() => {
     fetchSkills()
   }, [fetchSkills])
 
+  useEffect(() => {
+    const query = searchQuery.trim()
+    const timeoutId = window.setTimeout(() => {
+      if (query) void searchSkills(query)
+      else void fetchSkills()
+    }, 160)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [fetchSkills, searchQuery, searchSkills])
+
+  useEffect(() => {
+    if (!activeWorkspace) {
+      queueMicrotask(() => setWorkspaceSkillIds(null))
+      return
+    }
+
+    let cancelled = false
+    listWorkspaceSkills(activeWorkspace.id)
+      .then((workspaceSkills) => {
+        if (!cancelled) {
+          setWorkspaceSkillIds(new Set(workspaceSkills.map((item) => item.skillId)))
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setWorkspaceSkillIds(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeWorkspace, listWorkspaceSkills])
+
   const handleScan = async () => {
     setScanning(true)
+    setScanMessage('')
     try {
-      await scanSkills()
+      const result = await scanSkills()
+      setScanMessage(
+        result.errors.length > 0
+          ? `扫描完成，发现 ${result.total} 个技能，${result.errors.length} 个问题。`
+          : `扫描完成，发现 ${result.total} 个技能。`,
+      )
     } finally {
       setScanning(false)
     }
   }
 
-  const filteredSkills = filterSkills(skills, { searchQuery, filterTool, filterCategory })
+  const filteredSkills = useMemo(() => {
+    const scopedSkills = workspaceSkillIds
+      ? skills.filter((skill) => workspaceSkillIds.has(skill.id))
+      : skills
+    return filterSkills(scopedSkills, { searchQuery, filterTool, filterCategory })
+  }, [filterCategory, filterTool, searchQuery, skills, workspaceSkillIds])
 
   const { parentRef, virtualItems, totalHeight, getRowItems, colCount } =
     useVirtualGrid(filteredSkills, viewMode)
@@ -45,6 +93,11 @@ export default function SkillsPage() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <SkillsToolbar onScan={handleScan} scanning={scanning} />
+        {scanMessage && (
+          <div className="mx-4 mt-3 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-panel)] px-3 py-2 text-[12px] text-[var(--color-text-secondary)]">
+            {scanMessage}
+          </div>
+        )}
 
         {/* Skills grid/list — virtualised */}
         <div
@@ -108,6 +161,7 @@ export default function SkillsPage() {
                         key={skill.id}
                         skill={skill}
                         selected={selectedSkill?.id === skill.id}
+                        variant={viewMode}
                         onClick={() => setSelectedSkill(skill)}
                       />
                     ))}

@@ -17,6 +17,7 @@ pub struct DbState(pub Mutex<rusqlite::Connection>);
 pub struct ScanResult {
     pub total: usize,
     pub by_tool: Vec<ToolScanInfo>,
+    pub errors: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,19 +39,33 @@ pub fn scan_skills(state: State<'_, DbState>) -> Result<ScanResult, String> {
     ];
 
     let conn = state.0.lock().map_err(|e| e.to_string())?;
-    let mut result = ScanResult { total: 0, by_tool: vec![] };
+    let mut result = ScanResult { total: 0, by_tool: vec![], errors: vec![] };
 
     for adapter in &adapters {
         let available = adapter.is_available();
         let skills = if available {
-            adapter.scan().unwrap_or_default()
+            match adapter.scan() {
+                Ok(skills) => skills,
+                Err(err) => {
+                    result.errors.push(format!("{} 扫描失败：{}", adapter.name(), err));
+                    vec![]
+                }
+            }
         } else {
             vec![]
         };
         let count = skills.len();
 
-        for skill in skills {
-            db::upsert_skill(&conn, &skill).ok();
+        for mut skill in skills {
+            match db::find_skill_id_by_install_path(&conn, adapter.id(), &skill.install_path) {
+                Ok(Some(existing_id)) => skill.id = existing_id,
+                Ok(None) => {}
+                Err(err) => result.errors.push(format!("{} 旧记录匹配失败：{}", skill.name, err)),
+            }
+
+            if let Err(err) = db::upsert_skill(&conn, &skill) {
+                result.errors.push(format!("{} 写入数据库失败：{}", skill.name, err));
+            }
         }
 
         result.by_tool.push(ToolScanInfo {

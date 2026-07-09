@@ -1,7 +1,7 @@
 use anyhow::Result;
+use anyhow::{anyhow, Context};
 use std::fs;
-use std::path::PathBuf;
-use uuid::Uuid;
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 use super::{SkillMeta, ToolAdapter};
@@ -15,6 +15,16 @@ pub struct CcSwitchAdapter;
 
 fn home() -> Option<PathBuf> {
     dirs_next::home_dir()
+}
+
+fn stable_skill_id(tool_id: &str, install_path: &Path) -> String {
+    let input = format!("{}:{}", tool_id, install_path.to_string_lossy());
+    let mut hash = 0xcbf29ce484222325u64;
+    for byte in input.as_bytes() {
+        hash ^= *byte as u64;
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    format!("{}-{hash:016x}", tool_id)
 }
 
 fn scan_dir(dir: PathBuf, tool_id: &str) -> Result<Vec<SkillMeta>> {
@@ -34,7 +44,10 @@ fn scan_dir(dir: PathBuf, tool_id: &str) -> Result<Vec<SkillMeta>> {
             continue;
         }
 
-        let meta = parse_skill_md(&skill_md).unwrap_or_default();
+        let meta = parse_skill_md(&skill_md).unwrap_or_else(|err| {
+            eprintln!("SKILL.md 解析失败 {:?}: {}", skill_md, err);
+            Default::default()
+        });
         let original_name = skill_dir
             .file_name()
             .unwrap_or_default()
@@ -43,11 +56,12 @@ fn scan_dir(dir: PathBuf, tool_id: &str) -> Result<Vec<SkillMeta>> {
         let enabled = !skill_dir.join(".disabled").exists();
 
         skills.push(SkillMeta {
-            id: Uuid::new_v4().to_string(),
+            id: stable_skill_id(tool_id, skill_dir),
             name: if meta.name.is_empty() { original_name.clone() } else { meta.name },
             original_name,
             description: if meta.description.is_empty() { None } else { Some(meta.description) },
-            version: None,
+            source: if meta.source.is_empty() { None } else { Some(meta.source) },
+            version: if meta.version.is_empty() { None } else { Some(meta.version) },
             install_path: skill_dir.to_string_lossy().to_string(),
             tool_id: tool_id.to_string(),
             enabled,
@@ -56,8 +70,24 @@ fn scan_dir(dir: PathBuf, tool_id: &str) -> Result<Vec<SkillMeta>> {
     Ok(skills)
 }
 
-fn toggle_skill(skill_path: &str, enable: bool) -> Result<()> {
-    let marker = PathBuf::from(skill_path).join(".disabled");
+fn validate_skill_path(root: &Path, skill_path: &str) -> Result<PathBuf> {
+    let root = root
+        .canonicalize()
+        .with_context(|| format!("无法解析技能根目录 {:?}", root))?;
+    let target = PathBuf::from(skill_path)
+        .canonicalize()
+        .with_context(|| format!("无法解析技能路径 {}", skill_path))?;
+
+    // 所有文件操作都必须限制在对应工具的 skills 根目录下，避免误删任意路径。
+    if !target.starts_with(&root) {
+        return Err(anyhow!("技能路径不在允许目录内: {}", skill_path));
+    }
+    Ok(target)
+}
+
+fn toggle_skill(root: &Path, skill_path: &str, enable: bool) -> Result<()> {
+    let safe_skill_path = validate_skill_path(root, skill_path)?;
+    let marker = safe_skill_path.join(".disabled");
     if enable {
         if marker.exists() { fs::remove_file(marker)?; }
     } else {
@@ -66,8 +96,9 @@ fn toggle_skill(skill_path: &str, enable: bool) -> Result<()> {
     Ok(())
 }
 
-fn uninstall(skill_path: &str) -> Result<()> {
-    fs::remove_dir_all(skill_path)?;
+fn uninstall(root: &Path, skill_path: &str) -> Result<()> {
+    let safe_skill_path = validate_skill_path(root, skill_path)?;
+    fs::remove_dir_all(safe_skill_path)?;
     Ok(())
 }
 
@@ -82,9 +113,9 @@ impl ToolAdapter for ClaudeCodeAdapter {
     fn scan(&self) -> Result<Vec<SkillMeta>> {
         scan_dir(self.skills_path().unwrap_or_default(), self.id())
     }
-    fn enable_skill(&self, p: &str) -> Result<()> { toggle_skill(p, true) }
-    fn disable_skill(&self, p: &str) -> Result<()> { toggle_skill(p, false) }
-    fn uninstall_skill(&self, p: &str) -> Result<()> { uninstall(p) }
+    fn enable_skill(&self, p: &str) -> Result<()> { toggle_skill(&self.skills_path().unwrap_or_default(), p, true) }
+    fn disable_skill(&self, p: &str) -> Result<()> { toggle_skill(&self.skills_path().unwrap_or_default(), p, false) }
+    fn uninstall_skill(&self, p: &str) -> Result<()> { uninstall(&self.skills_path().unwrap_or_default(), p) }
 }
 
 // ── Agents ──────────────────────────────────────────────────────────────────
@@ -98,9 +129,9 @@ impl ToolAdapter for AgentsAdapter {
     fn scan(&self) -> Result<Vec<SkillMeta>> {
         scan_dir(self.skills_path().unwrap_or_default(), self.id())
     }
-    fn enable_skill(&self, p: &str) -> Result<()> { toggle_skill(p, true) }
-    fn disable_skill(&self, p: &str) -> Result<()> { toggle_skill(p, false) }
-    fn uninstall_skill(&self, p: &str) -> Result<()> { uninstall(p) }
+    fn enable_skill(&self, p: &str) -> Result<()> { toggle_skill(&self.skills_path().unwrap_or_default(), p, true) }
+    fn disable_skill(&self, p: &str) -> Result<()> { toggle_skill(&self.skills_path().unwrap_or_default(), p, false) }
+    fn uninstall_skill(&self, p: &str) -> Result<()> { uninstall(&self.skills_path().unwrap_or_default(), p) }
 }
 
 // ── cc-switch ───────────────────────────────────────────────────────────────
@@ -114,7 +145,7 @@ impl ToolAdapter for CcSwitchAdapter {
     fn scan(&self) -> Result<Vec<SkillMeta>> {
         scan_dir(self.skills_path().unwrap_or_default(), self.id())
     }
-    fn enable_skill(&self, p: &str) -> Result<()> { toggle_skill(p, true) }
-    fn disable_skill(&self, p: &str) -> Result<()> { toggle_skill(p, false) }
-    fn uninstall_skill(&self, p: &str) -> Result<()> { uninstall(p) }
+    fn enable_skill(&self, p: &str) -> Result<()> { toggle_skill(&self.skills_path().unwrap_or_default(), p, true) }
+    fn disable_skill(&self, p: &str) -> Result<()> { toggle_skill(&self.skills_path().unwrap_or_default(), p, false) }
+    fn uninstall_skill(&self, p: &str) -> Result<()> { uninstall(&self.skills_path().unwrap_or_default(), p) }
 }

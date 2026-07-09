@@ -16,14 +16,18 @@ export function filterSkills(skills: Skill[], params: FilterParams): Skill[] {
 
   return skills.filter((s) => {
     if (filterTool && s.toolId !== filterTool) return false
-    if (filterCategory && !s.categories.includes(filterCategory)) return false
+    if (filterCategory && !s.categoryIds.includes(filterCategory) && !s.categories.includes(filterCategory)) {
+      return false
+    }
     if (!q) return true
 
     return (
       s.name.toLowerCase().includes(q) ||
       (s.description?.toLowerCase().includes(q) ?? false) ||
       s.tags.some((t) => t.toLowerCase().includes(q)) ||
-      (s.note?.toLowerCase().includes(q) ?? false)
+      s.aliases.some((alias) => alias.toLowerCase().includes(q)) ||
+      (s.note?.toLowerCase().includes(q) ?? false) ||
+      (s.highlight?.toLowerCase().includes(q) ?? false)
     )
   })
 }
